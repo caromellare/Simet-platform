@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --sidebar-width: 240px;
+}
+
+body {
+  background-color: #0A0A14;
+  color: #E2E8F0;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #12121F;
+}
+::-webkit-scrollbar-thumb {
+  background: #2A2A45;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3D3878;
+}
+
+/* Card hover glow */
+.card-hover {
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.card-hover:hover {
+  box-shadow: 0 0 0 1px rgba(124, 111, 247, 0.3), 0 4px 20px rgba(124, 111, 247, 0.1);
+  border-color: rgba(124, 111, 247, 0.4);
+}
+
+/* Stat card glow */
+.stat-meta { box-shadow: 0 0 20px rgba(24, 119, 242, 0.1); }
+.stat-google { box-shadow: 0 0 20px rgba(66, 133, 244, 0.1); }
+.stat-social { box-shadow: 0 0 20px rgba(124, 111, 247, 0.1); }
+
+/* Badge */
+.badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border;
+}
+
+/* Tab active indicator */
+.tab-active {
+  @apply relative;
+}
+.tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #7C6FF7;
+  border-radius: 1px;
+}
+
+/* Kanban card drag */
+.dragging {
+  opacity: 0.5;
+  transform: scale(1.02);
+}
+
+/* Calendar day */
+.cal-day { min-height: 80px; }
+
+/* Input focus ring */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(124, 111, 247, 0.4);
+}
