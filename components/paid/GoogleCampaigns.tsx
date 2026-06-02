@@ -31,10 +31,6 @@ export function GoogleCampaigns({ brand }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   async function load() {
-    if (!brand.networksData?.googleAdsData) {
-      setError('Esta marca no tiene Google Ads conectado en Metricool')
-      return
-    }
     setLoading(true); setError(null)
     try {
       const monthStr = `${year}-${String(month).padStart(2, '0')}`
@@ -69,7 +65,7 @@ export function GoogleCampaigns({ brand }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <div className="text-xs text-slate-500 bg-bg-card border border-bg-border px-3 py-1.5 rounded-lg">
-            ID: <span className="text-slate-300">{brand.networksData?.googleAdsData || '—'}</span>
+            ID: <span className="text-slate-300">{brand.networksData?.googleAdsData || brand.label}</span>
           </div>
           <button onClick={load} disabled={loading} className="p-2 rounded-lg bg-bg-card border border-bg-border hover:bg-bg-elevated text-slate-400 disabled:opacity-50">
             <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />

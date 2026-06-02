@@ -33,10 +33,6 @@ export function MetaCampaigns({ brand }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   async function load() {
-    if (!brand.networksData?.facebookAdsData) {
-      setError('Esta marca no tiene Meta Ads conectado en Metricool')
-      return
-    }
     setLoading(true)
     setError(null)
     try {
@@ -83,7 +79,7 @@ export function MetaCampaigns({ brand }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <div className="text-xs text-slate-500 bg-bg-card border border-bg-border px-3 py-1.5 rounded-lg">
-            Cuenta: <span className="text-slate-300">{brand.networksData?.facebookAdsData || '—'}</span>
+            Cuenta: <span className="text-slate-300">{brand.networksData?.facebookAdsData || brand.label}</span>
           </div>
           <button onClick={load} disabled={loading} className="p-2 rounded-lg bg-bg-card border border-bg-border hover:bg-bg-elevated text-slate-400 disabled:opacity-50">
             <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
