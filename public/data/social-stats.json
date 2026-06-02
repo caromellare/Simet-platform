@@ -1,10 +1,28 @@
 {
   "brandId": 1674000,
   "brandName": "Simet Fábrica",
-  "month": "2026-06",
+  "period": "last30days",
+  "from": "2026-05-02",
+  "to": "2026-06-02",
   "updatedAt": "2026-06-02T18:00:00-03:00",
-  "rows": [
-    [null,null,"0.0",null,"0.0",null,null,null],
-    ["65701.0","36.0",null,"7464.0",null,"6.0","1.0","660.0"]
-  ]
+  "aggregated": {
+    "followers": 65701,
+    "followersGrowth": 873,
+    "posts": 12,
+    "reels": 6,
+    "stories": 116,
+    "profileViews": 423002,
+    "reach": 229988,
+    "interactions": 497,
+    "postsViews": 34358,
+    "postsLikes": 301,
+    "postsComments": 47,
+    "postsSaved": 88,
+    "postsShares": 61,
+    "reelsViews": 11875,
+    "reelsSaved": 36,
+    "reelsShares": 28,
+    "savedTotal": 124,
+    "sharedTotal": 89
+  }
 }

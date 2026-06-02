@@ -8,13 +8,36 @@
   box-sizing: border-box;
 }
 
-:root {
+/* Dark mode (default) */
+:root, [data-theme="dark"] {
+  --bg-base: #0A0A14;
+  --bg-card: #12121F;
+  --bg-elevated: #1A1A2E;
+  --bg-border: #2A2A45;
+  --text-primary: #E2E8F0;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --sidebar-bg: #12121F;
+  --sidebar-border: #2A2A45;
   --sidebar-width: 240px;
 }
 
+/* Light mode */
+[data-theme="light"] {
+  --bg-base: #F8F9FC;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F1F3F9;
+  --bg-border: #E2E8F0;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --sidebar-bg: #1E2235;
+  --sidebar-border: #2A3350;
+}
+
 body {
-  background-color: #0A0A14;
-  color: #E2E8F0;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -82,4 +105,23 @@ body {
 input:focus, select:focus, textarea:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(124, 111, 247, 0.4);
+}
+
+/* Light mode overrides */
+[data-theme="light"] .bg-bg-base { background-color: var(--bg-base) !important; }
+[data-theme="light"] .bg-bg-card { background-color: var(--bg-card) !important; }
+[data-theme="light"] .bg-bg-elevated { background-color: var(--bg-elevated) !important; }
+[data-theme="light"] .border-bg-border { border-color: var(--bg-border) !important; }
+[data-theme="light"] .text-slate-200 { color: var(--text-primary) !important; }
+[data-theme="light"] .text-slate-300 { color: var(--text-secondary) !important; }
+[data-theme="light"] .text-slate-400 { color: var(--text-secondary) !important; }
+[data-theme="light"] .text-slate-500 { color: var(--text-muted) !important; }
+[data-theme="light"] .text-slate-600 { color: #94A3B8 !important; }
+[data-theme="light"] .text-white { color: var(--text-primary) !important; }
+[data-theme="light"] .placeholder-slate-500::placeholder { color: var(--text-muted) !important; }
+[data-theme="light"] .placeholder-slate-600::placeholder { color: #CBD5E1 !important; }
+[data-theme="light"] select, [data-theme="light"] input, [data-theme="light"] textarea {
+  background-color: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--bg-border) !important;
 }

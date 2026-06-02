@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Trophy, RefreshCw } from 'lucide-react'
 import type { Brand } from '@/lib/types'
+import { DateRangePicker } from '@/components/DateRangePicker'
 
 // Row format: [adName, campaignName, spent, clicks, impressions, reach, leads, messagingConversations, imageUrl]
 function parseAds(rows: any[][]) {
@@ -25,11 +26,24 @@ const MEDALS = ['🥇', '🥈', '🥉']
 
 interface Props { brand: Brand }
 
+function getDefaultDates() {
+  const to = new Date()
+  const from = new Date()
+  from.setDate(from.getDate() - 30)
+  return {
+    from: from.toISOString().split('T')[0],
+    to: to.toISOString().split('T')[0],
+  }
+}
+
 export function BestAds({ brand }: Props) {
+  const defaults = getDefaultDates()
   const [ads, setAds] = useState<ReturnType<typeof parseAds>>([])
   const [loading, setLoading] = useState(true)
   const [updatedAt, setUpdatedAt] = useState('')
   const [error, setError] = useState('')
+  const [dateFrom, setDateFrom] = useState(defaults.from)
+  const [dateTo, setDateTo] = useState(defaults.to)
 
   useEffect(() => {
     setLoading(true)
@@ -65,10 +79,15 @@ export function BestAds({ brand }: Props) {
           <h2 className="text-sm font-semibold text-white">Top 3 anuncios por conversaciones WhatsApp</h2>
           {updatedAt && (
             <p className="text-xs text-slate-500 mt-0.5">
-              Datos al {new Date(updatedAt).toLocaleDateString('es-AR')}
+              Datos al {new Date(updatedAt).toLocaleDateString('es-AR')} · <span className="text-slate-600 italic">Datos del período cacheado</span>
             </p>
           )}
         </div>
+        <DateRangePicker
+          from={dateFrom}
+          to={dateTo}
+          onChange={(f, t) => { setDateFrom(f); setDateTo(t) }}
+        />
       </div>
 
       {/* Top 3 cards */}

@@ -9,10 +9,10 @@ module.exports = {
     extend: {
       colors: {
         bg: {
-          base: '#0A0A14',
-          card: '#12121F',
-          elevated: '#1A1A2E',
-          border: '#2A2A45',
+          base: 'var(--bg-base)',
+          card: 'var(--bg-card)',
+          elevated: 'var(--bg-elevated)',
+          border: 'var(--bg-border)',
         },
         brand: {
           purple: '#7C6FF7',
