@@ -157,4 +157,4 @@ export interface SocialStats {
 // ─── Shared ───────────────────────────────────────────────────────────
 export type Module = 'dashboard' | 'ugc' | 'social' | 'paid'
 export type SocialView = 'calendar' | 'kanban' | 'ideas' | 'report'
-export type PaidView = 'meta' | 'google' | 'ideas'
+export type PaidView = 'meta' | 'google' | 'ideas' | 'best-ads'

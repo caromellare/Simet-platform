@@ -1,10 +1,11 @@
 'use client'
 import { useState } from 'react'
-import { DollarSign, Facebook, Search, Lightbulb } from 'lucide-react'
+import { DollarSign, Facebook, Search, Lightbulb, Trophy } from 'lucide-react'
 import { BrandSelector } from '@/components/BrandSelector'
 import { MetaCampaigns } from '@/components/paid/MetaCampaigns'
 import { GoogleCampaigns } from '@/components/paid/GoogleCampaigns'
 import { CampaignIdeas } from '@/components/paid/CampaignIdeas'
+import { BestAds } from '@/components/paid/BestAds'
 import type { Brand, PaidView } from '@/lib/types'
 
 const DEFAULT_BRAND = { id: 1674000, label: 'Simet Fábrica' } as Brand
@@ -13,6 +14,7 @@ const TABS: { key: PaidView; label: string; icon: React.ReactNode }[] = [
   { key: 'meta', label: 'Meta Ads', icon: <Facebook size={14} /> },
   { key: 'google', label: 'Google Ads', icon: <Search size={14} /> },
   { key: 'ideas', label: 'Ideas & Próximas', icon: <Lightbulb size={14} /> },
+  { key: 'best-ads', label: 'Mejores Anuncios', icon: <Trophy size={14} /> },
 ]
 
 export default function PaidPage() {
@@ -45,6 +47,7 @@ export default function PaidPage() {
               view === tab.key
                 ? tab.key === 'meta' ? 'bg-meta-blue/15 text-meta-blue-light border border-meta-blue/25'
                   : tab.key === 'google' ? 'bg-google-blue/15 text-blue-300 border border-google-blue/25'
+                  : tab.key === 'best-ads' ? 'bg-brand-orange/15 text-brand-orange border border-brand-orange/25'
                   : 'bg-brand-purple/15 text-brand-purple border border-brand-purple/25'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-bg-elevated'
             }`}
@@ -59,6 +62,7 @@ export default function PaidPage() {
         {view === 'meta' && <MetaCampaigns brand={brand} />}
         {view === 'google' && <GoogleCampaigns brand={brand} />}
         {view === 'ideas' && <CampaignIdeas brand={brand} />}
+        {view === 'best-ads' && <BestAds brand={brand} />}
       </div>
     </div>
   )

@@ -14,7 +14,7 @@ const TABS: { key: SocialView; label: string; icon: React.ReactNode }[] = [
   { key: 'calendar', label: 'Calendario', icon: <Calendar size={14} /> },
   { key: 'kanban', label: 'Videos', icon: <LayoutGrid size={14} /> },
   { key: 'ideas', label: 'Ideas', icon: <Lightbulb size={14} /> },
-  { key: 'report', label: 'Reporte', icon: <BarChart2 size={14} /> },
+  { key: 'report', label: 'Reportes', icon: <BarChart2 size={14} /> },
 ]
 
 export default function SocialPage() {

@@ -4,10 +4,14 @@ import { join } from 'path'
 import type { MetaCampaign } from '@/lib/types'
 
 // Reads from /public/data/meta-campaigns.json
-// This file is updated via Cowork scheduled task (Metricool MCP → JSON → git push → Vercel redeploy)
+// Accepts ?from=YYYY-MM-DD&to=YYYY-MM-DD or legacy ?month=YYYY-MM
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const brandId = searchParams.get('brandId') || '1674000'
+  const fromParam = searchParams.get('from')
+  const toParam = searchParams.get('to')
+  // Legacy support
+  const monthParam = searchParams.get('month')
 
   try {
     const filePath = join(process.cwd(), 'public', 'data', 'meta-campaigns.json')
@@ -17,7 +21,32 @@ export async function GET(req: Request) {
       return NextResponse.json([], { headers: { 'X-Cache': 'MISS' } })
     }
 
-    const campaigns: MetaCampaign[] = parseMeta(raw)
+    let campaigns: MetaCampaign[] = parseMeta(raw)
+
+    // Filter by date range if provided
+    if (fromParam || toParam || monthParam) {
+      let from = fromParam
+      let to = toParam
+
+      // Legacy month param: convert to first/last of month
+      if (!from && !to && monthParam) {
+        const [y, m] = monthParam.split('-').map(Number)
+        const lastDay = new Date(y, m, 0).getDate()
+        from = `${y}-${String(m).padStart(2, '0')}-01`
+        to = `${y}-${String(m).padStart(2, '0')}-${lastDay}`
+      }
+
+      if (from || to) {
+        campaigns = campaigns.filter(c => {
+          const startDate = c.start ? c.start.slice(0, 10) : null
+          if (!startDate) return true
+          if (from && startDate < from) return false
+          if (to && startDate > to) return false
+          return true
+        })
+      }
+    }
+
     return NextResponse.json(campaigns, {
       headers: {
         'X-Cache': 'HIT',

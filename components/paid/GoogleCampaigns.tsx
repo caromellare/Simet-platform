@@ -1,15 +1,14 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, RefreshCw, AlertCircle, Target } from 'lucide-react'
+import { RefreshCw, AlertCircle, Target } from 'lucide-react'
 import { StatCard } from '@/components/StatCard'
+import { DateRangePicker } from '@/components/DateRangePicker'
 import { metricoolParams } from '@/lib/config'
 import type { Brand, GoogleCampaign } from '@/lib/types'
 
-const MONTHS_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-
 function fmtCurrency(n: number) {
   if (!n || n === 0) return '—'
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(n)
+  return `$ ${Math.round(n).toLocaleString('es-AR')}`
 }
 function fmt(n: number) { if (!n) return '—'; if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`; if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`; return n.toLocaleString('es-AR') }
 function fmtPct(n: number) { if (!n) return '—'; return `${(n * 100).toFixed(2)}%` }
@@ -20,21 +19,28 @@ const STATUS_COLORS: Record<string, string> = {
   REMOVED: 'text-red-400 bg-red-500/10 border-red-500/25',
 }
 
+function getDefaultRange() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const lastDay = new Date(y, now.getMonth() + 1, 0).getDate()
+  return { from: `${y}-${m}-01`, to: `${y}-${m}-${lastDay}` }
+}
+
 interface Props { brand: Brand }
 
 export function GoogleCampaigns({ brand }: Props) {
-  const today = new Date()
-  const [year, setYear] = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth() + 1)
+  const def = getDefaultRange()
+  const [from, setFrom] = useState(def.from)
+  const [to, setTo] = useState(def.to)
   const [campaigns, setCampaigns] = useState<GoogleCampaign[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function load() {
+  async function load(f = from, t = to) {
     setLoading(true); setError(null)
     try {
-      const monthStr = `${year}-${String(month).padStart(2, '0')}`
-      const res = await fetch(`/api/metricool/google-campaigns?${metricoolParams(brand.id, { month: monthStr })}`)
+      const res = await fetch(`/api/metricool/google-campaigns?${metricoolParams(brand.id, { from: f, to: t })}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al cargar')
       setCampaigns(Array.isArray(data) ? data : [])
@@ -42,12 +48,12 @@ export function GoogleCampaigns({ brand }: Props) {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [brand.id, month, year])
+  useEffect(() => { load() }, [brand.id])
 
-  const prev = () => { if (month === 1) { setMonth(12); setYear(y => y - 1) } else setMonth(m => m - 1) }
-  const next = () => {
-    const isFuture = year > today.getFullYear() || (year === today.getFullYear() && month >= today.getMonth() + 1)
-    if (!isFuture) { if (month === 12) { setMonth(1); setYear(y => y + 1) } else setMonth(m => m + 1) }
+  function handleRangeChange(newFrom: string, newTo: string) {
+    setFrom(newFrom)
+    setTo(newTo)
+    load(newFrom, newTo)
   }
 
   const totals = campaigns.reduce((acc, c) => ({
@@ -58,16 +64,12 @@ export function GoogleCampaigns({ brand }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <button onClick={prev} className="p-2 rounded-lg bg-bg-card border border-bg-border hover:bg-bg-elevated text-slate-400"><ChevronLeft size={16} /></button>
-          <span className="text-sm font-semibold text-white w-36 text-center">{MONTHS_ES[month - 1]} {year}</span>
-          <button onClick={next} className="p-2 rounded-lg bg-bg-card border border-bg-border hover:bg-bg-elevated text-slate-400"><ChevronRight size={16} /></button>
-        </div>
+        <DateRangePicker from={from} to={to} onChange={handleRangeChange} />
         <div className="flex items-center gap-2">
           <div className="text-xs text-slate-500 bg-bg-card border border-bg-border px-3 py-1.5 rounded-lg">
             ID: <span className="text-slate-300">{brand.networksData?.googleAdsData || brand.label}</span>
           </div>
-          <button onClick={load} disabled={loading} className="p-2 rounded-lg bg-bg-card border border-bg-border hover:bg-bg-elevated text-slate-400 disabled:opacity-50">
+          <button onClick={() => load()} disabled={loading} className="p-2 rounded-lg bg-bg-card border border-bg-border hover:bg-bg-elevated text-slate-400 disabled:opacity-50">
             <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
           </button>
         </div>
@@ -102,7 +104,7 @@ export function GoogleCampaigns({ brand }: Props) {
         <div className="bg-bg-card border border-bg-border rounded-xl p-10 text-center">
           <Target size={32} className="text-slate-600 mx-auto mb-3" />
           <p className="text-slate-400 font-medium">Sin campañas para este período</p>
-          <p className="text-slate-600 text-sm mt-1">No hubo campañas de Google Ads en {MONTHS_ES[month - 1]} {year}</p>
+          <p className="text-slate-600 text-sm mt-1">No hubo campañas de Google Ads en el rango seleccionado</p>
         </div>
       ) : campaigns.length > 0 ? (
         <div className="bg-bg-card border border-bg-border rounded-xl overflow-hidden">

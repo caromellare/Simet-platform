@@ -3,13 +3,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Users, Share2, DollarSign,
-  Megaphone, Zap, ChevronRight, Settings
+  Megaphone, Zap, ChevronRight, Settings, CheckSquare
 } from 'lucide-react'
 
 const NAV = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, color: 'text-brand-purple' },
   { href: '/ugc', label: 'UGC / Influencers', icon: Users, color: 'text-brand-pink' },
   { href: '/social', label: 'Social Media', icon: Share2, color: 'text-brand-teal' },
+  { href: '/tareas', label: 'Tareas', icon: CheckSquare, color: 'text-brand-green' },
   { href: '/paid', label: 'Paid Media', icon: DollarSign, color: 'text-brand-orange' },
 ]
 

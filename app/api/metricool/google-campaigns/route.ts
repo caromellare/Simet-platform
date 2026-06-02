@@ -6,6 +6,9 @@ import type { GoogleCampaign } from '@/lib/types'
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const brandId = searchParams.get('brandId') || '1674000'
+  const fromParam = searchParams.get('from')
+  const toParam = searchParams.get('to')
+  const monthParam = searchParams.get('month')
 
   try {
     const filePath = join(process.cwd(), 'public', 'data', 'google-campaigns.json')
@@ -15,7 +18,32 @@ export async function GET(req: Request) {
       return NextResponse.json([])
     }
 
-    return NextResponse.json(parseGoogle(raw), {
+    let campaigns: GoogleCampaign[] = parseGoogle(raw)
+
+    // Filter by date range if provided
+    if (fromParam || toParam || monthParam) {
+      let from = fromParam
+      let to = toParam
+
+      if (!from && !to && monthParam) {
+        const [y, m] = monthParam.split('-').map(Number)
+        const lastDay = new Date(y, m, 0).getDate()
+        from = `${y}-${String(m).padStart(2, '0')}-01`
+        to = `${y}-${String(m).padStart(2, '0')}-${lastDay}`
+      }
+
+      if (from || to) {
+        campaigns = campaigns.filter(c => {
+          const startDate = c.start ? c.start.slice(0, 10) : null
+          if (!startDate) return true
+          if (from && startDate < from) return false
+          if (to && startDate > to) return false
+          return true
+        })
+      }
+    }
+
+    return NextResponse.json(campaigns, {
       headers: { 'X-Updated-At': raw.updatedAt || '', 'X-Month': raw.month || '' }
     })
   } catch (err: any) {
