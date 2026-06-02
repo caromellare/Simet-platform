@@ -24,19 +24,30 @@ export async function GET(req: Request) {
 }
 
 function parseGoogle(raw: any): GoogleCampaign[] {
-  if (!raw?.data || !Array.isArray(raw.data)) return []
-  return raw.data.map((row: any) => ({
-    name: row.GACA01 || 'Sin nombre',
-    start: row.GACA02 || '',
-    stop: row.GACA12 || '',
-    impressions: parseInt(row.GACA03 || 0),
-    clicks: parseInt(row.GACA04 || 0),
-    conversions: parseFloat(row.GACA05 || 0),
-    spent: parseFloat(row.GACA07 || 0),
-    cpm: parseFloat(row.GACA08 || 0),
-    cpc: parseFloat(row.GACA09 || 0),
-    ctr: parseFloat(row.GACA10 || 0),
-    roas: parseFloat(row.GACA11 || 0),
-    status: row.GACA13 || '',
-  } satisfies GoogleCampaign))
+  // Positional rows — matches GOOGLE_CAMPAIGN_METRICS order:
+  // 0:name, 1:impressions, 2:clicks, 3:conversions, 4:conversionsValue,
+  // 5:spent, 6:start, 7:stop, 8:status
+  if (!raw?.rows || !Array.isArray(raw.rows)) return []
+  return raw.rows.map((row: any[]) => {
+    const n = (idx: number) => parseFloat(row[idx] ?? 0) || 0
+    const s = (idx: number) => String(row[idx] ?? '')
+    const impressions = n(1)
+    const clicks      = n(2)
+    const spent       = n(5)
+    const convValue   = n(4)
+    return {
+      name:        s(0) || 'Sin nombre',
+      start:       s(6),
+      stop:        s(7),
+      impressions,
+      clicks,
+      conversions: n(3),
+      spent,
+      cpm:         impressions > 0 ? (spent / impressions) * 1000 : 0,
+      cpc:         clicks > 0 ? spent / clicks : 0,
+      ctr:         impressions > 0 ? clicks / impressions : 0,
+      roas:        spent > 0 ? convValue / spent : 0,
+      status:      s(8),
+    } satisfies GoogleCampaign
+  })
 }

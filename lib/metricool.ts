@@ -58,52 +58,47 @@ export async function getAnalyticsData(
 }
 
 // ─── Meta Ads Campaigns ───────────────────────────────────────────────
-// Key metrics for paid social reporting
+// IMPORTANT: Only raw metrics — NO formula metrics (FACA19/20/21 are formulas, calculated client-side)
+// Response format: { rows: [[val0, val1, ...], ...] } — positional, matches order below
 export const META_CAMPAIGN_METRICS = [
-  'FACA05', // name
-  'FACA03', // start
-  'FACA04', // stop
-  'FACA07', // objective
-  'FACA10', // impressions
-  'FACA12', // reach
-  'FACA13', // spent
-  'FACA14', // clicks
-  'FACA19', // CPC
-  'FACA20', // CPM
-  'FACA21', // CTR
-  'FACA41', // leads
-  'FACA77', // messaging conversations (WhatsApp)
-  'FACA156', // results
-  'FACA157', // results label
+  'FACA05', // 0: name
+  'FACA13', // 1: spent
+  'FACA14', // 2: clicks
+  'FACA10', // 3: impressions
+  'FACA12', // 4: reach
+  'FACA41', // 5: leads
+  'FACA77', // 6: messaging conversations (WhatsApp)
+  'FACA156', // 7: results
+  'FACA157', // 8: results label
+  'FACA03', // 9: start date
+  'FACA04', // 10: stop date
+  'FACA07', // 11: objective
 ]
 
 // ─── Google Ads Campaigns ─────────────────────────────────────────────
+// Only raw metrics — CPC/CPM/CTR/ROAS calculated client-side
 export const GOOGLE_CAMPAIGN_METRICS = [
-  'GACA01', // name
-  'GACA02', // start
-  'GACA12', // stop
-  'GACA03', // impressions
-  'GACA04', // clicks
-  'GACA05', // conversions
-  'GACA07', // spent
-  'GACA08', // CPM
-  'GACA09', // CPC
-  'GACA10', // CTR
-  'GACA11', // ROAS
-  'GACA13', // status
+  'GACA01', // 0: name
+  'GACA03', // 1: impressions
+  'GACA04', // 2: clicks
+  'GACA05', // 3: conversions
+  'GACA06', // 4: conversions value (for ROAS)
+  'GACA07', // 5: spent
+  'GACA02', // 6: start
+  'GACA12', // 7: stop
+  'GACA13', // 8: status
 ]
 
 // ─── Instagram Evolution ──────────────────────────────────────────────
 export const INSTAGRAM_METRICS = [
-  'IGEV01', // followers
-  'IGEV03', // follows gained/lost
-  'IGEV04', // posts
-  'IGEV06', // reach
-  'IGEV09', // post interactions
-  'IGEV16', // stories
-  'IGEV22', // reels
-  'IGEV23', // reels views
-  'IGEV9999', // engagement
+  'IGEV01', // 0: followers
+  'IGEV03', // 1: follows gained/lost
+  'IGEV04', // 2: posts
+  'IGEV06', // 3: reach
+  'IGEV09', // 4: post interactions
+  'IGEV16', // 5: stories
+  'IGEV22', // 6: reels
+  'IGEV23', // 7: reels views
 ]
 
 // ─── Scheduled Posts ─────────────────────────────────────────────────

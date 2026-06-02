@@ -24,20 +24,21 @@ export async function GET(req: Request) {
 }
 
 function aggregateStats(raw: any) {
-  if (!raw?.data || !Array.isArray(raw.data)) return null
+  // Positional rows — matches INSTAGRAM_METRICS order:
+  // 0:followers, 1:followersGrowth, 2:posts, 3:reach,
+  // 4:interactions, 5:stories, 6:reels, 7:reelsViews
+  if (!raw?.rows || !Array.isArray(raw.rows)) return null
 
-  // Sum up daily values
-  const totals = raw.data.reduce((acc: any, row: any) => {
-    acc.followers = Math.max(acc.followers || 0, parseInt(row.IGEV01 || 0))
-    acc.followersGrowth = (acc.followersGrowth || 0) + parseInt(row.IGEV03 || 0)
-    acc.posts = (acc.posts || 0) + parseInt(row.IGEV04 || 0)
-    acc.reach = (acc.reach || 0) + parseInt(row.IGEV06 || 0)
-    acc.interactions = (acc.interactions || 0) + parseInt(row.IGEV09 || 0)
-    acc.stories = (acc.stories || 0) + parseInt(row.IGEV16 || 0)
-    acc.reels = (acc.reels || 0) + parseInt(row.IGEV22 || 0)
-    acc.reelsViews = (acc.reelsViews || 0) + parseInt(row.IGEV23 || 0)
-    return acc
-  }, {})
+  const n = (val: any) => parseFloat(val ?? 0) || 0
 
-  return totals
+  return raw.rows.reduce((acc: any, row: any[]) => ({
+    followers:      Math.max(acc.followers || 0, n(row[0])),
+    followersGrowth:(acc.followersGrowth || 0) + n(row[1]),
+    posts:          (acc.posts || 0) + n(row[2]),
+    reach:          (acc.reach || 0) + n(row[3]),
+    interactions:   (acc.interactions || 0) + n(row[4]),
+    stories:        (acc.stories || 0) + n(row[5]),
+    reels:          (acc.reels || 0) + n(row[6]),
+    reelsViews:     (acc.reelsViews || 0) + n(row[7]),
+  }), {})
 }

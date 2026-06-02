@@ -24,33 +24,40 @@ export async function GET(req: Request) {
 }
 
 function parseMeta(raw: any): MetaCampaign[] {
-  // Metricool analytics returns rows where each row is keyed by fieldId
-  if (!raw?.data || !Array.isArray(raw.data)) return []
+  // Metricool returns: { rows: [[val0, val1, ...], ...] }
+  // Positional — matches order of META_CAMPAIGN_METRICS exactly:
+  // 0:name, 1:spent, 2:clicks, 3:impressions, 4:reach,
+  // 5:leads, 6:messagingConversations, 7:results, 8:resultsLabel,
+  // 9:start, 10:stop, 11:objective
+  if (!raw?.rows || !Array.isArray(raw.rows)) return []
 
-  return raw.data.map((row: any, i: number) => {
-    const spent = parseFloat(row.FACA13 || 0)
-    const clicks = parseInt(row.FACA14 || 0)
-    const impressions = parseInt(row.FACA10 || 0)
-    const results = parseInt(row.FACA156 || 0)
+  return raw.rows.map((row: any[], i: number) => {
+    const n    = (idx: number) => parseFloat(row[idx] ?? 0) || 0
+    const s    = (idx: number) => String(row[idx] ?? '')
+
+    const spent       = n(1)
+    const clicks      = n(2)
+    const impressions = n(3)
+    const results     = n(7)
 
     return {
-      id: row.FACA06 || String(i),
-      name: row.FACA05 || 'Sin nombre',
-      start: row.FACA03 || '',
-      stop: row.FACA04 || '',
-      objective: row.FACA07 || '',
+      id:                     String(i),
+      name:                   s(0) || 'Sin nombre',
+      start:                  s(9),
+      stop:                   s(10),
+      objective:              s(11),
       impressions,
-      reach: parseInt(row.FACA12 || 0),
+      reach:                  n(4),
       clicks,
       spent,
-      cpc: parseFloat(row.FACA19 || 0),
-      cpm: parseFloat(row.FACA20 || 0),
-      ctr: parseFloat(row.FACA21 || 0),
-      leads: parseInt(row.FACA41 || 0),
-      messagingConversations: parseInt(row.FACA77 || 0),
+      cpc:                    clicks > 0 ? spent / clicks : 0,
+      cpm:                    impressions > 0 ? (spent / impressions) * 1000 : 0,
+      ctr:                    impressions > 0 ? clicks / impressions : 0,
+      leads:                  n(5),
+      messagingConversations: n(6),
       results,
-      resultsLabel: row.FACA157 || '',
-      costPerResult: results > 0 ? spent / results : 0,
+      resultsLabel:           s(8),
+      costPerResult:          results > 0 ? spent / results : 0,
     } satisfies MetaCampaign
   })
 }
