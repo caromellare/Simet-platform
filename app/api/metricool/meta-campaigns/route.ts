@@ -1,32 +1,38 @@
 import { NextResponse } from 'next/server'
-import { getAnalyticsData, META_CAMPAIGN_METRICS, startOfMonth, endOfMonth } from '@/lib/metricool'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import type { MetaCampaign } from '@/lib/types'
 
+// Reads from /public/data/meta-campaigns.json
+// This file is updated via Cowork scheduled task (Metricool MCP → JSON → git push → Vercel redeploy)
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
-  const brandId = Number(searchParams.get('brandId') || process.env.NEXT_PUBLIC_DEFAULT_BRAND_ID || 1674000)
-  const monthParam = searchParams.get('month')
-  const token = searchParams.get('token') || undefined
-  const userId = searchParams.get('userId') || undefined
-
-  const refDate = monthParam ? new Date(`${monthParam}-01`) : new Date()
-  const from = startOfMonth(refDate)
-  const to = endOfMonth(refDate)
+  const brandId = searchParams.get('brandId') || '1674000'
 
   try {
-    const raw = await getAnalyticsData(brandId, from, to, META_CAMPAIGN_METRICS, token, userId)
+    const filePath = join(process.cwd(), 'public', 'data', 'meta-campaigns.json')
+    const raw = JSON.parse(readFileSync(filePath, 'utf-8'))
+
+    if (raw.brandId !== Number(brandId)) {
+      return NextResponse.json([], { headers: { 'X-Cache': 'MISS' } })
+    }
+
     const campaigns: MetaCampaign[] = parseMeta(raw)
-    return NextResponse.json(campaigns)
+    return NextResponse.json(campaigns, {
+      headers: {
+        'X-Cache': 'HIT',
+        'X-Updated-At': raw.updatedAt || '',
+        'X-Month': raw.month || '',
+      }
+    })
   } catch (err: any) {
     console.error('[API] meta-campaigns error:', err)
-    return NextResponse.json({ error: err.message || 'Error Metricool' }, { status: 500 })
+    return NextResponse.json({ error: 'No hay datos en cache. Actualizá desde Cowork.' }, { status: 404 })
   }
 }
 
 function parseMeta(raw: any): MetaCampaign[] {
-  // Metricool returns: { rows: [[val0, val1, ...], ...] }
-  // Positional — matches order of META_CAMPAIGN_METRICS exactly:
-  // 0:name, 1:spent, 2:clicks, 3:impressions, 4:reach,
+  // Positional rows: 0:name, 1:spent, 2:clicks, 3:impressions, 4:reach,
   // 5:leads, 6:messagingConversations, 7:results, 8:resultsLabel,
   // 9:start, 10:stop, 11:objective
   if (!raw?.rows || !Array.isArray(raw.rows)) return []
