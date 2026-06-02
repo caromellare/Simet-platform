@@ -5,13 +5,15 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const brandId = Number(searchParams.get('brandId') || process.env.NEXT_PUBLIC_DEFAULT_BRAND_ID || 1674000)
   const monthParam = searchParams.get('month')
+  const token = searchParams.get('token') || undefined
+  const userId = searchParams.get('userId') || undefined
 
   const refDate = monthParam ? new Date(`${monthParam}-01`) : new Date()
   const from = startOfMonth(refDate)
   const to = endOfMonth(refDate)
 
   try {
-    const raw = await getAnalyticsData(brandId, from, to, INSTAGRAM_METRICS)
+    const raw = await getAnalyticsData(brandId, from, to, INSTAGRAM_METRICS, token, userId)
     // Parse totals from time series
     const stats = aggregateStats(raw)
     return NextResponse.json(stats)

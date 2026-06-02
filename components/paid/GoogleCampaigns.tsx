@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, RefreshCw, AlertCircle, Target } from 'lucide-react'
 import { StatCard } from '@/components/StatCard'
+import { metricoolParams } from '@/lib/config'
 import type { Brand, GoogleCampaign } from '@/lib/types'
 
 const MONTHS_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -37,7 +38,7 @@ export function GoogleCampaigns({ brand }: Props) {
     setLoading(true); setError(null)
     try {
       const monthStr = `${year}-${String(month).padStart(2, '0')}`
-      const res = await fetch(`/api/metricool/google-campaigns?brandId=${brand.id}&month=${monthStr}`)
+      const res = await fetch(`/api/metricool/google-campaigns?${metricoolParams(brand.id, { month: monthStr })}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al cargar')
       setCampaigns(Array.isArray(data) ? data : [])

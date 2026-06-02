@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { BarChart2, ChevronLeft, ChevronRight, RefreshCw, AlertCircle, Instagram, Users, Eye, Heart, TrendingUp } from 'lucide-react'
 import { StatCard } from '@/components/StatCard'
+import { metricoolParams } from '@/lib/config'
 import type { Brand, SocialStats } from '@/lib/types'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
 
@@ -22,7 +23,7 @@ export function SocialReport({ brand }: Props) {
     setError(null)
     try {
       const monthStr = `${year}-${String(month).padStart(2, '0')}`
-      const res = await fetch(`/api/metricool/social-stats?brandId=${brand.id}&month=${monthStr}`)
+      const res = await fetch(`/api/metricool/social-stats?${metricoolParams(brand.id, { month: monthStr })}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al cargar datos')
       setStats(data)

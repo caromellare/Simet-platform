@@ -32,10 +32,12 @@ export async function getAnalyticsData(
   brandId: number,
   from: string,
   to: string,
-  metrics: string[]
+  metrics: string[],
+  token?: string,
+  uid?: string
 ) {
   const params = new URLSearchParams({
-    userId: userId(),
+    userId: getUserId(uid),
     blogId: String(brandId),
   })
 
@@ -43,9 +45,9 @@ export async function getAnalyticsData(
     `${BASE_URL}/analytics/v2/report?${params}`,
     {
       method: 'POST',
-      headers: headers(),
+      headers: getHeaders(token),
       body: JSON.stringify({ from, to, fields: metrics }),
-      next: { revalidate: 900 }, // 15 min cache
+      next: { revalidate: 900 },
     }
   )
   if (!res.ok) {

@@ -14,10 +14,22 @@ export function BrandSelector({ selectedBrandId, onChange }: Props) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/metricool/brands')
+    // Read token from localStorage (set in Settings page)
+    let url = '/api/metricool/brands'
+    try {
+      const stored = localStorage.getItem('metricool_config')
+      if (stored) {
+        const cfg = JSON.parse(stored)
+        if (cfg.userToken) {
+          url += `?token=${encodeURIComponent(cfg.userToken)}&userId=${cfg.userId || '1010863'}`
+        }
+      }
+    } catch {}
+
+    fetch(url)
       .then(r => r.json())
       .then(data => {
-        setBrands(data)
+        setBrands(Array.isArray(data) ? data : [])
         setLoading(false)
       })
       .catch(() => setLoading(false))
