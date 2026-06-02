@@ -4,18 +4,23 @@
 
 const BASE_URL = 'https://app.metricool.com/api'
 
-const headers = () => ({
-  'X-Mc-Auth': process.env.METRICOOL_USER_TOKEN || '',
+// Token and userId can come from env vars OR be passed explicitly (from settings page)
+const getHeaders = (token?: string) => ({
+  'X-Mc-Auth': token || process.env.METRICOOL_USER_TOKEN || '',
   'Content-Type': 'application/json',
 })
 
-const userId = () => process.env.METRICOOL_USER_ID || ''
+const getUserId = (uid?: string) => uid || process.env.METRICOOL_USER_ID || ''
+
+// Keep old exports for backward compat
+const headers = () => getHeaders()
+const userId = () => getUserId()
 
 // ─── Brands ──────────────────────────────────────────────────────────
-export async function getBrands() {
+export async function getBrands(token?: string, uid?: string) {
   const res = await fetch(
-    `${BASE_URL}/admin/simpleProfiles?userId=${userId()}&blogId=0`,
-    { headers: headers(), next: { revalidate: 300 } }
+    `${BASE_URL}/admin/simpleProfiles?userId=${getUserId(uid)}&blogId=0`,
+    { headers: getHeaders(token), next: { revalidate: 300 } }
   )
   if (!res.ok) throw new Error(`Metricool brands error: ${res.status}`)
   const data = await res.json()
