@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login']
 const ADMIN_ONLY_PATHS = ['/settings', '/api/auth/users']
+// Solo admins pueden hacer PUT/DELETE en estas APIs
+const ADMIN_ONLY_WRITE_APIS = ['/api/config']
 
 // Middleware corre en Edge Runtime — solo verificamos expiración aquí.
 // La firma del token se verifica en /api/auth/me (Node.js runtime).
@@ -22,8 +24,13 @@ export function middleware(req: NextRequest) {
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) return NextResponse.next()
   if (pathname.startsWith('/_next')) return NextResponse.next()
   if (pathname.match(/\.(ico|png|jpg|jpeg|svg|json)$/)) return NextResponse.next()
-  // APIs que no son /api/auth/me ni /api/auth/users pasan sin verificación de rol
-  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/me') && !pathname.startsWith('/api/auth/users')) {
+  // APIs de datos pasan sin autenticación (data es pública dentro de la plataforma)
+  // excepto las que requieren rol admin
+  const isAdminWriteApi = ADMIN_ONLY_WRITE_APIS.some(p => pathname.startsWith(p)) && req.method !== 'GET'
+  if (pathname.startsWith('/api/') &&
+      !pathname.startsWith('/api/auth/me') &&
+      !pathname.startsWith('/api/auth/users') &&
+      !isAdminWriteApi) {
     return NextResponse.next()
   }
 

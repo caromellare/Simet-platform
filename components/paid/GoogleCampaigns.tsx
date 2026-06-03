@@ -34,16 +34,36 @@ export function GoogleCampaigns({ brand }: Props) {
   const [from, setFrom] = useState(def.from)
   const [to, setTo] = useState(def.to)
   const [campaigns, setCampaigns] = useState<GoogleCampaign[]>([])
+  const [prevCampaigns, setPrevCampaigns] = useState<GoogleCampaign[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  function prevPeriod(f: string, t: string) {
+    const fd = new Date(f), td = new Date(t)
+    const days = Math.round((td.getTime() - fd.getTime()) / 86400000) + 1
+    const pf = new Date(fd.getTime() - days * 86400000)
+    const pt = new Date(fd.getTime() - 86400000)
+    return { from: pf.toISOString().slice(0, 10), to: pt.toISOString().slice(0, 10) }
+  }
+
+  function pct(current: number, prev: number) {
+    if (!prev) return undefined
+    return ((current - prev) / prev) * 100
+  }
 
   async function load(f = from, t = to) {
     setLoading(true); setError(null)
     try {
-      const res = await fetch(`/api/metricool/google-campaigns?${metricoolParams(brand.id, { from: f, to: t })}`)
+      const prev = prevPeriod(f, t)
+      const [res, prevRes] = await Promise.all([
+        fetch(`/api/metricool/google-campaigns?${metricoolParams(brand.id, { from: f, to: t })}`),
+        fetch(`/api/metricool/google-campaigns?${metricoolParams(brand.id, { from: prev.from, to: prev.to })}`),
+      ])
       const data = await res.json()
+      const prevData = await prevRes.json()
       if (!res.ok) throw new Error(data.error || 'Error al cargar')
       setCampaigns(Array.isArray(data) ? data : [])
+      setPrevCampaigns(Array.isArray(prevData) ? prevData : [])
     } catch (e: any) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -57,6 +77,11 @@ export function GoogleCampaigns({ brand }: Props) {
   }
 
   const totals = campaigns.reduce((acc, c) => ({
+    spent: acc.spent + c.spent, impressions: acc.impressions + c.impressions,
+    clicks: acc.clicks + c.clicks, conversions: acc.conversions + c.conversions,
+  }), { spent: 0, impressions: 0, clicks: 0, conversions: 0 })
+
+  const prevTotals = prevCampaigns.reduce((acc, c) => ({
     spent: acc.spent + c.spent, impressions: acc.impressions + c.impressions,
     clicks: acc.clicks + c.clicks, conversions: acc.conversions + c.conversions,
   }), { spent: 0, impressions: 0, clicks: 0, conversions: 0 })
@@ -87,10 +112,10 @@ export function GoogleCampaigns({ brand }: Props) {
 
       {!error && (
         <div className="grid grid-cols-5 gap-3 mb-6">
-          <StatCard label="Inversión" value={fmtCurrency(totals.spent)} color="blue" loading={loading} />
-          <StatCard label="Impresiones" value={fmt(totals.impressions)} color="purple" loading={loading} />
-          <StatCard label="Clics" value={fmt(totals.clicks)} color="teal" loading={loading} />
-          <StatCard label="Conversiones" value={fmt(totals.conversions)} color="green" loading={loading} />
+          <StatCard label="Inversión" value={fmtCurrency(totals.spent)} trend={pct(totals.spent, prevTotals.spent)} color="blue" loading={loading} />
+          <StatCard label="Impresiones" value={fmt(totals.impressions)} trend={pct(totals.impressions, prevTotals.impressions)} color="purple" loading={loading} />
+          <StatCard label="Clics" value={fmt(totals.clicks)} trend={pct(totals.clicks, prevTotals.clicks)} color="teal" loading={loading} />
+          <StatCard label="Conversiones" value={fmt(totals.conversions)} trend={pct(totals.conversions, prevTotals.conversions)} color="green" loading={loading} />
           <StatCard label="CPC prom." value={fmtCurrency(totals.clicks > 0 ? totals.spent / totals.clicks : 0)} color="orange" loading={loading} />
         </div>
       )}

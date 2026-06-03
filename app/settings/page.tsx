@@ -289,7 +289,7 @@ export default function SettingsPage() {
   const [testResult, setTestResult] = useState<'ok' | 'error' | null>(null)
   const [testError, setTestError] = useState('')
 
-  // Load from localStorage on mount
+  // Cargar desde localStorage primero, luego sincronizar con la DB
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -298,10 +298,35 @@ export default function SettingsPage() {
         setConfig(prev => ({ ...prev, ...parsed }))
       }
     } catch {}
+    // También leer de la DB (para mostrar el estado guardado en el servidor)
+    fetch('/api/config').then(r => r.ok ? r.json() : null).then(cfg => {
+      if (cfg?.brandId) {
+        setConfig(prev => ({
+          ...prev,
+          userId: cfg.userId || prev.userId,
+          defaultBrandId: cfg.brandId || prev.defaultBrandId,
+          defaultBrandName: cfg.brandName || prev.defaultBrandName,
+        }))
+      }
+    }).catch(() => {})
   }, [])
 
-  function save() {
+  async function save() {
+    // Guardar en localStorage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+    // Guardar en la DB (para todos los usuarios)
+    try {
+      await fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userToken: config.userToken,
+          userId: config.userId,
+          brandId: config.defaultBrandId,
+          brandName: config.defaultBrandName,
+        }),
+      })
+    } catch {}
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }

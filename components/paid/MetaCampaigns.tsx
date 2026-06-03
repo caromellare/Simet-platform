@@ -31,11 +31,28 @@ function getDefaultRange() {
 
 interface Props { brand: Brand }
 
+function pct(current: number, prev: number) {
+  if (!prev) return undefined
+  return ((current - prev) / prev) * 100
+}
+
+function prevPeriod(from: string, to: string) {
+  const f = new Date(from), t = new Date(to)
+  const days = Math.round((t.getTime() - f.getTime()) / 86400000) + 1
+  const pf = new Date(f.getTime() - days * 86400000)
+  const pt = new Date(f.getTime() - 86400000)
+  return {
+    from: pf.toISOString().slice(0, 10),
+    to: pt.toISOString().slice(0, 10),
+  }
+}
+
 export function MetaCampaigns({ brand }: Props) {
   const def = getDefaultRange()
   const [from, setFrom] = useState(def.from)
   const [to, setTo] = useState(def.to)
   const [campaigns, setCampaigns] = useState<MetaCampaign[]>([])
+  const [prevCampaigns, setPrevCampaigns] = useState<MetaCampaign[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,10 +60,16 @@ export function MetaCampaigns({ brand }: Props) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/metricool/meta-campaigns?${metricoolParams(brand.id, { from: f, to: t })}`)
+      const prev = prevPeriod(f, t)
+      const [res, prevRes] = await Promise.all([
+        fetch(`/api/metricool/meta-campaigns?${metricoolParams(brand.id, { from: f, to: t })}`),
+        fetch(`/api/metricool/meta-campaigns?${metricoolParams(brand.id, { from: prev.from, to: prev.to })}`),
+      ])
       const data = await res.json()
+      const prevData = await prevRes.json()
       if (!res.ok) throw new Error(data.error || 'Error al cargar')
       setCampaigns(Array.isArray(data) ? data : [])
+      setPrevCampaigns(Array.isArray(prevData) ? prevData : [])
     } catch (e: any) {
       setError(e.message)
     } finally {
@@ -73,6 +96,13 @@ export function MetaCampaigns({ brand }: Props) {
 
   const avgCPC = totals.clicks > 0 ? totals.spent / totals.clicks : 0
   const avgCPM = totals.impressions > 0 ? (totals.spent / totals.impressions) * 1000 : 0
+
+  const prevTotals = prevCampaigns.reduce((acc, c) => ({
+    spent: acc.spent + c.spent,
+    impressions: acc.impressions + c.impressions,
+    clicks: acc.clicks + c.clicks,
+    results: acc.results + c.results,
+  }), { spent: 0, impressions: 0, clicks: 0, results: 0 })
 
   return (
     <div>
@@ -103,12 +133,12 @@ export function MetaCampaigns({ brand }: Props) {
       {/* Summary stats */}
       {!error && (
         <div className="grid grid-cols-6 gap-3 mb-6">
-          <StatCard label="Inversión" value={fmtCurrency(totals.spent)} color="blue" icon={<DollarSign size={13} />} loading={loading} />
-          <StatCard label="Impresiones" value={fmt(totals.impressions)} color="purple" icon={<TrendingUp size={13} />} loading={loading} />
-          <StatCard label="Clics" value={fmt(totals.clicks)} color="teal" icon={<MousePointer size={13} />} loading={loading} />
+          <StatCard label="Inversión" value={fmtCurrency(totals.spent)} trend={pct(totals.spent, prevTotals.spent)} color="blue" icon={<DollarSign size={13} />} loading={loading} />
+          <StatCard label="Impresiones" value={fmt(totals.impressions)} trend={pct(totals.impressions, prevTotals.impressions)} color="purple" icon={<TrendingUp size={13} />} loading={loading} />
+          <StatCard label="Clics" value={fmt(totals.clicks)} trend={pct(totals.clicks, prevTotals.clicks)} color="teal" icon={<MousePointer size={13} />} loading={loading} />
           <StatCard label="CPC" value={fmtCurrency(avgCPC)} sub="costo por clic" color="orange" loading={loading} />
           <StatCard label="CPM" value={fmtCurrency(avgCPM)} sub="por mil impresiones" color="pink" loading={loading} />
-          <StatCard label="Resultados" value={totals.results || (totals.leads + totals.conversations)} sub={totals.conversations > 0 ? `${totals.conversations} conv. WA` : 'leads'} color="green" icon={<Target size={13} />} loading={loading} />
+          <StatCard label="Resultados" value={totals.results || (totals.leads + totals.conversations)} trend={pct(totals.results, prevTotals.results)} sub={totals.conversations > 0 ? `${totals.conversations} conv. WA` : 'leads'} color="green" icon={<Target size={13} />} loading={loading} />
         </div>
       )}
 
