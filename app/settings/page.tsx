@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Settings, Key, Building2, CheckCircle2, AlertCircle, Eye, EyeOff, RefreshCw, Trash2, ExternalLink, Save, Zap } from 'lucide-react'
+import { Settings, Key, Building2, CheckCircle2, AlertCircle, Eye, EyeOff, RefreshCw, Trash2, ExternalLink, Save, Zap, Users, Plus, Edit2, X, Shield, BookOpen } from 'lucide-react'
 
 interface MetricoolConfig {
   userToken: string
@@ -19,6 +19,260 @@ const BRANDS_WITH_PAID = [
   { id: '4871946', name: 'Atomic Kitchens', meta: true, google: false },
   { id: '5324131', name: 'Porcelanova', meta: true, google: false },
 ]
+
+interface UserRecord {
+  id: string
+  name: string
+  email: string
+  role: 'admin' | 'lector'
+  createdAt: string
+}
+
+const EMPTY_USER_FORM = { name: '', email: '', password: '', role: 'lector' as 'admin' | 'lector' }
+
+function UsersSection() {
+  const [users, setUsers] = useState<UserRecord[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [editingUser, setEditingUser] = useState<UserRecord | null>(null)
+  const [form, setForm] = useState(EMPTY_USER_FORM)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [showFormPass, setShowFormPass] = useState(false)
+  const [currentUserId] = useState('1') // placeholder — in real use would come from /api/auth/me
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  async function fetchUsers() {
+    setLoadingUsers(true)
+    try {
+      const res = await fetch('/api/auth/users')
+      if (res.ok) setUsers(await res.json())
+    } catch {}
+    setLoadingUsers(false)
+  }
+
+  function openAdd() {
+    setForm(EMPTY_USER_FORM)
+    setEditingUser(null)
+    setSaveError('')
+    setShowModal(true)
+  }
+
+  function openEdit(u: UserRecord) {
+    setForm({ name: u.name, email: u.email, password: '', role: u.role })
+    setEditingUser(u)
+    setSaveError('')
+    setShowModal(true)
+  }
+
+  async function saveUser() {
+    if (!form.name.trim() || !form.email.trim()) return
+    if (!editingUser && !form.password.trim()) { setSaveError('La contraseña es requerida'); return }
+    setSaving(true)
+    setSaveError('')
+    try {
+      const body = editingUser
+        ? { id: editingUser.id, name: form.name, email: form.email, role: form.role, ...(form.password ? { password: form.password } : {}) }
+        : { name: form.name, email: form.email, password: form.password, role: form.role }
+      const res = await fetch('/api/auth/users', {
+        method: editingUser ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al guardar')
+      setShowModal(false)
+      fetchUsers()
+    } catch (e: any) {
+      setSaveError(e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteUser(id: string) {
+    if (!confirm('¿Eliminar este usuario?')) return
+    await fetch('/api/auth/users', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    fetchUsers()
+  }
+
+  return (
+    <div className="bg-bg-card border border-bg-border rounded-2xl overflow-hidden mt-5">
+      <div className="px-6 py-4 border-b border-bg-border flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-brand-purple/10 border border-brand-purple/25 flex items-center justify-center">
+          <Users size={15} className="text-brand-purple" />
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-white">Usuarios</h2>
+          <p className="text-xs text-slate-500">Administrá quién tiene acceso al hub</p>
+        </div>
+        <button
+          onClick={openAdd}
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-purple hover:bg-brand-purple-light text-white transition-colors"
+        >
+          <Plus size={12} /> Agregar usuario
+        </button>
+      </div>
+
+      <div className="px-6 py-4">
+        {loadingUsers ? (
+          <div className="text-center py-6">
+            <RefreshCw size={18} className="text-slate-600 mx-auto mb-2 animate-spin" />
+            <p className="text-slate-500 text-xs">Cargando usuarios...</p>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-6">
+            <Users size={24} className="text-slate-600 mx-auto mb-2" />
+            <p className="text-slate-500 text-sm">Sin usuarios registrados</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {users.map(u => (
+              <div key={u.id} className="flex items-center gap-4 px-4 py-3 bg-bg-elevated rounded-xl border border-bg-border">
+                <div className="w-8 h-8 rounded-full bg-brand-purple/20 flex items-center justify-center text-sm font-bold text-brand-purple">
+                  {u.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-slate-200 truncate">{u.name}</div>
+                  <div className="text-xs text-slate-500 truncate">{u.email}</div>
+                </div>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium border ${
+                  u.role === 'admin'
+                    ? 'bg-brand-purple/15 text-brand-purple border-brand-purple/25'
+                    : 'bg-blue-500/15 text-blue-300 border-blue-500/25'
+                }`}>
+                  {u.role === 'admin' ? <Shield size={9} /> : <BookOpen size={9} />}
+                  {u.role === 'admin' ? 'Admin' : 'Lector'}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => openEdit(u)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-bg-card transition-colors"
+                  >
+                    <Edit2 size={13} />
+                  </button>
+                  <button
+                    onClick={() => deleteUser(u.id)}
+                    disabled={u.id === currentUserId}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    title={u.id === currentUserId ? 'No podés eliminar tu propio usuario' : 'Eliminar usuario'}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Role legend */}
+      <div className="px-6 pb-4 flex items-center gap-6 text-xs text-slate-600">
+        <div className="flex items-center gap-1.5"><Shield size={11} className="text-brand-purple" /> <span>Admin — Acceso completo</span></div>
+        <div className="flex items-center gap-1.5"><BookOpen size={11} className="text-blue-400" /> <span>Lector — Solo puede seleccionar fechas</span></div>
+      </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-bg-elevated border border-bg-border rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-bg-border">
+              <h3 className="text-sm font-semibold text-white">{editingUser ? 'Editar usuario' : 'Agregar usuario'}</h3>
+              <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-bg-card transition-colors">
+                <X size={15} />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Nombre</label>
+                <input
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="Nombre completo"
+                  className="w-full px-3 py-2.5 bg-bg-card border border-bg-border rounded-xl text-sm text-slate-200 placeholder-slate-600"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="usuario@email.com"
+                  className="w-full px-3 py-2.5 bg-bg-card border border-bg-border rounded-xl text-sm text-slate-200 placeholder-slate-600"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                  Contraseña {editingUser && <span className="text-slate-600">(dejar vacío para no cambiar)</span>}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showFormPass ? 'text' : 'password'}
+                    value={form.password}
+                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                    placeholder={editingUser ? 'Nueva contraseña (opcional)' : 'Contraseña'}
+                    className="w-full pl-3 pr-10 py-2.5 bg-bg-card border border-bg-border rounded-xl text-sm text-slate-200 placeholder-slate-600"
+                  />
+                  <button type="button" onClick={() => setShowFormPass(!showFormPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+                    {showFormPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1.5">Rol</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['admin', 'lector'] as const).map(r => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, role: r }))}
+                      className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all ${
+                        form.role === r
+                          ? r === 'admin' ? 'bg-brand-purple/10 border-brand-purple/40 text-white' : 'bg-blue-500/10 border-blue-500/40 text-white'
+                          : 'bg-bg-card border-bg-border text-slate-500 hover:border-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 text-xs font-semibold capitalize">
+                        {r === 'admin' ? <Shield size={11} /> : <BookOpen size={11} />}
+                        {r === 'admin' ? 'Admin' : 'Lector'}
+                      </div>
+                      <div className="text-[10px] text-slate-500">{r === 'admin' ? 'Acceso completo' : 'Solo puede seleccionar fechas'}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {saveError && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 text-sm text-red-400">
+                  {saveError}
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-bg-border flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-slate-200 transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={saveUser}
+                disabled={saving}
+                className="px-5 py-2 rounded-xl text-sm font-semibold bg-brand-purple hover:bg-brand-purple-light text-white transition-colors disabled:opacity-50"
+              >
+                {saving ? 'Guardando...' : editingUser ? 'Guardar cambios' : 'Crear usuario'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const [config, setConfig] = useState<MetricoolConfig>({
@@ -252,6 +506,9 @@ export default function SettingsPage() {
           El token se guarda localmente en este navegador. Para que funcione en todos los dispositivos, agregalo también como variable de entorno <code className="text-brand-purple">METRICOOL_USER_TOKEN</code> en Vercel → Settings → Environment Variables.
         </p>
       </div>
+
+      {/* Users Management */}
+      <UsersSection />
     </div>
   )
 }

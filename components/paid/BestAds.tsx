@@ -46,11 +46,27 @@ export function BestAds({ brand }: Props) {
   const [dateTo, setDateTo] = useState(defaults.to)
 
   useEffect(() => {
-    setLoading(true)
-    fetch(`/api/metricool/meta-ads?brandId=${brand.id}`)
-      .then(r => { setUpdatedAt(r.headers.get('X-Updated-At') || ''); return r.json() })
-      .then(data => { setAds(Array.isArray(data) ? parseAds(data) : []); setLoading(false) })
-      .catch(e => { setError(e.message); setLoading(false) })
+    async function loadAds() {
+      setLoading(true)
+      setError('')
+      try {
+        const res = await fetch(`/api/metricool/meta-ads?brandId=${brand.id}`)
+        const ua = res.headers.get('X-Updated-At') || ''
+        if (ua) setUpdatedAt(ua)
+        const data = await res.json()
+        if (!res.ok) throw new Error(data?.error || `Error ${res.status}`)
+        if (Array.isArray(data) && data.length > 0) {
+          setAds(parseAds(data))
+        } else {
+          setError('Sin datos de anuncios disponibles')
+        }
+      } catch (e: any) {
+        setError(e.message || 'Error al cargar anuncios')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadAds()
   }, [brand.id])
 
   const sorted = [...ads].sort((a, b) => b.waConversations - a.waConversations)
@@ -64,11 +80,17 @@ export function BestAds({ brand }: Props) {
     </div>
   )
 
-  if (error || ads.length === 0) return (
+  if (error) return (
     <div className="bg-bg-card border border-bg-border rounded-xl p-10 text-center">
       <Trophy size={32} className="text-slate-600 mx-auto mb-3" />
       <p className="text-slate-400 font-medium">Sin datos de anuncios</p>
-      <p className="text-slate-600 text-sm mt-1">Actualizá el cache desde Cowork</p>
+      <p className="text-slate-500 text-sm mt-1">{error}</p>
+    </div>
+  )
+  if (!loading && ads.length === 0) return (
+    <div className="bg-bg-card border border-bg-border rounded-xl p-10 text-center">
+      <Trophy size={32} className="text-slate-600 mx-auto mb-3" />
+      <p className="text-slate-400 font-medium">Sin anuncios en el período</p>
     </div>
   )
 

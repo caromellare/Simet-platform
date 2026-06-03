@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { Users, Plus, Search, Filter, X, ExternalLink, Trash2, Edit2, Instagram, Youtube, Facebook } from 'lucide-react'
 import type { UGCCreator, UGCStatus, UGCPlatform, ContentType, Brand } from '@/lib/types'
-import { BrandSelector } from '@/components/BrandSelector'
 import { StatCard } from '@/components/StatCard'
 
 const DEFAULT_BRAND = { id: 1674000, label: 'Simet Fábrica' } as Brand
@@ -119,7 +118,6 @@ export default function UGCPage() {
           <button onClick={openAdd} className="flex items-center gap-2 px-3 py-2 bg-brand-purple hover:bg-brand-purple-light rounded-lg text-sm font-medium text-white transition-colors">
             <Plus size={15} /> Agregar Creador
           </button>
-          <BrandSelector selectedBrandId={brand.id} onChange={setBrand} />
         </div>
       </div>
 

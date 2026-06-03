@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { Share2, Calendar, LayoutGrid, Lightbulb, BarChart2 } from 'lucide-react'
-import { BrandSelector } from '@/components/BrandSelector'
 import { CalendarView } from '@/components/social/CalendarView'
 import { VideoKanban } from '@/components/social/VideoKanban'
 import { IdeasBoard } from '@/components/social/IdeasBoard'
@@ -34,7 +33,6 @@ export default function SocialPage() {
             <p className="text-xs text-slate-500">Calendario, videos, ideas y reportes mensuales</p>
           </div>
         </div>
-        <BrandSelector selectedBrandId={brand.id} onChange={setBrand} />
       </div>
 
       {/* Tabs */}

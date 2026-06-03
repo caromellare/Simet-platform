@@ -1,0 +1,10 @@
+[
+  {
+    "id": "1",
+    "name": "Caro",
+    "email": "acarolinamellare@gmail.com",
+    "passwordHash": "c1a875c54b92135a73ed31023c4c6953005237fcd82a3d94590fda1caad4ffbb",
+    "role": "admin",
+    "createdAt": "2026-06-02T00:00:00.000Z"
+  }
+]

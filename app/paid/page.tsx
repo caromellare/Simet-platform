@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { DollarSign, Facebook, Search, Lightbulb, Trophy } from 'lucide-react'
-import { BrandSelector } from '@/components/BrandSelector'
 import { MetaCampaigns } from '@/components/paid/MetaCampaigns'
 import { GoogleCampaigns } from '@/components/paid/GoogleCampaigns'
 import { CampaignIdeas } from '@/components/paid/CampaignIdeas'
@@ -34,7 +33,6 @@ export default function PaidPage() {
             <p className="text-xs text-slate-500">Campañas activas de Meta Ads y Google Ads — datos vía Metricool</p>
           </div>
         </div>
-        <BrandSelector selectedBrandId={brand.id} onChange={setBrand} />
       </div>
 
       {/* Tabs */}
