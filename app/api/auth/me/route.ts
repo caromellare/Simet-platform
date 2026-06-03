@@ -8,8 +8,9 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'simet-marketing-hub-secret
 function parseToken(token: string) {
   try {
     const [payloadB64, sig] = token.split('.')
-    const payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString())
-    const expectedSig = createHash('sha256').update(JSON.stringify(payload) + SESSION_SECRET).digest('hex').slice(0, 16)
+    const payloadStr = Buffer.from(payloadB64, 'base64').toString()
+    const payload = JSON.parse(payloadStr)
+    const expectedSig = createHash('sha256').update(payloadStr + SESSION_SECRET).digest('hex').slice(0, 16)
     if (sig !== expectedSig) return null
     if (payload.expires < Date.now()) return null
     return payload

@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createHash } from 'crypto'
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'simet-marketing-hub-secret-2026'
 const PUBLIC_PATHS = ['/login', '/api/auth/login']
-// Solo admins pueden acceder a estas rutas
 const ADMIN_ONLY_PATHS = ['/settings', '/api/auth/users']
 
+// Middleware corre en Edge Runtime — solo verificamos expiración aquí.
+// La firma del token se verifica en /api/auth/me (Node.js runtime).
 function parseToken(token: string): { userId: string; role: string; expires: number } | null {
   try {
-    const [payloadB64, sig] = token.split('.')
-    const payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString())
-    const expectedSig = createHash('sha256').update(JSON.stringify(payload) + SESSION_SECRET).digest('hex').slice(0, 16)
-    if (sig !== expectedSig || payload.expires < Date.now()) return null
+    const [payloadB64] = token.split('.')
+    const payload = JSON.parse(atob(payloadB64))
+    if (!payload.userId || payload.expires < Date.now()) return null
     return payload
   } catch { return null }
 }

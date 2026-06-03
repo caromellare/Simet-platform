@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { DollarSign, Facebook, Search, Lightbulb, Trophy } from 'lucide-react'
 import { MetaCampaigns } from '@/components/paid/MetaCampaigns'
 import { GoogleCampaigns } from '@/components/paid/GoogleCampaigns'
@@ -17,8 +18,21 @@ const TABS: { key: PaidView; label: string; icon: React.ReactNode }[] = [
 ]
 
 export default function PaidPage() {
-  const [view, setView] = useState<PaidView>('meta')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const tabFromUrl = (searchParams.get('tab') as PaidView) || 'meta'
+  const [view, setView] = useState<PaidView>(tabFromUrl)
   const [brand, setBrand] = useState<Brand>(DEFAULT_BRAND)
+
+  useEffect(() => {
+    const t = (searchParams.get('tab') as PaidView) || 'meta'
+    if (TABS.find(tab => tab.key === t)) setView(t)
+  }, [searchParams])
+
+  function changeTab(key: PaidView) {
+    setView(key)
+    router.push(`/paid?tab=${key}`, { scroll: false })
+  }
 
   return (
     <div className="animate-fade-in">
@@ -40,7 +54,7 @@ export default function PaidPage() {
         {TABS.map(tab => (
           <button
             key={tab.key}
-            onClick={() => setView(tab.key)}
+            onClick={() => changeTab(tab.key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               view === tab.key
                 ? tab.key === 'meta' ? 'bg-meta-blue/15 text-meta-blue-light border border-meta-blue/25'

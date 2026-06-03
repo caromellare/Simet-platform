@@ -34,10 +34,14 @@ export async function GET(req: Request) {
 
       if (from || to) {
         campaigns = campaigns.filter(c => {
-          const startDate = c.start ? c.start.slice(0, 10) : null
+          const normalize = (d: string) => d.length === 8 && !d.includes('-')
+            ? `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}` : d.slice(0, 10)
+          const startDate = c.start ? normalize(c.start) : null
+          const stopDate  = c.stop  ? normalize(c.stop)  : null
           if (!startDate) return true
-          if (from && startDate < from) return false
-          if (to && startDate > to) return false
+          const campaignEnd = stopDate || '9999-12-31'
+          if (to   && startDate > to)     return false
+          if (from && campaignEnd < from) return false
           return true
         })
       }
@@ -58,9 +62,11 @@ function parseGoogle(raw: any): GoogleCampaign[] {
     const n = (idx: number) => parseFloat(row[idx] ?? 0) || 0
     const s = (idx: number) => String(row[idx] ?? '')
     const impressions = n(1), clicks = n(2), spent = n(5), convValue = n(4)
+    const fmtDate = (raw: string) => raw.length === 8 && !raw.includes('-')
+      ? `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}` : raw
     return {
       name: s(0) || 'Sin nombre',
-      start: s(6), stop: s(7),
+      start: fmtDate(s(6)), stop: s(7) ? fmtDate(s(7)) : '',
       impressions, clicks,
       conversions: n(3),
       spent,

@@ -38,10 +38,16 @@ export async function GET(req: Request) {
 
       if (from || to) {
         campaigns = campaigns.filter(c => {
-          const startDate = c.start ? c.start.slice(0, 10) : null
+          // Normalizar fecha: YYYYMMDD → YYYY-MM-DD
+          const normalize = (d: string) => d.length === 8 && !d.includes('-')
+            ? `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}` : d.slice(0, 10)
+          const startDate = c.start ? normalize(c.start) : null
+          const stopDate  = c.stop  ? normalize(c.stop)  : null
           if (!startDate) return true
-          if (from && startDate < from) return false
-          if (to && startDate > to) return false
+          // Campaña activa (sin stop) o con overlap con el rango pedido
+          const campaignEnd = stopDate || '9999-12-31'
+          if (to   && startDate > to)   return false // empieza después del rango
+          if (from && campaignEnd < from) return false // termina antes del rango
           return true
         })
       }
@@ -75,11 +81,14 @@ function parseMeta(raw: any): MetaCampaign[] {
     const impressions = n(3)
     const results     = n(7)
 
+    const fmtDate = (raw: string) => raw.length === 8 && !raw.includes('-')
+      ? `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}` : raw
+
     return {
       id:                     String(i),
       name:                   s(0) || 'Sin nombre',
-      start:                  s(9),
-      stop:                   s(10),
+      start:                  fmtDate(s(9)),
+      stop:                   s(10) ? fmtDate(s(10)) : '',
       objective:              s(11),
       impressions,
       reach:                  n(4),

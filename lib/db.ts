@@ -122,12 +122,13 @@ export async function getVideos(brand?: string) {
 
 export async function createVideo(data: Record<string, unknown>) {
   const rows = await sql`
-    INSERT INTO videos (title, platform, format, status, description, script, publish_date, post_url, tags, brand)
+    INSERT INTO videos (title, platform, format, status, description, script, publish_date, post_url, tags, brand, ugc_creator_id)
     VALUES (
       ${data.title as string}, ${data.platform as string}, ${data.format as string},
       ${(data.status as string) ?? 'idea'}, ${(data.description as string) ?? null},
       ${(data.script as string) ?? null}, ${(data.publishDate as string) ?? null},
-      ${(data.postUrl as string) ?? null}, ${JSON.stringify(data.tags ?? [])}, ${data.brand as string}
+      ${(data.postUrl as string) ?? null}, ${JSON.stringify(data.tags ?? [])}, ${data.brand as string},
+      ${(data.ugcCreatorId as string) ?? null}
     )
     RETURNING *
   `
@@ -143,7 +144,8 @@ export async function updateVideo(id: string, data: Record<string, unknown>) {
       script = ${(data.script as string) ?? null},
       publish_date = ${(data.publishDate as string) ?? null},
       post_url = ${(data.postUrl as string) ?? null},
-      tags = ${JSON.stringify(data.tags ?? [])}, brand = ${data.brand as string}
+      tags = ${JSON.stringify(data.tags ?? [])}, brand = ${data.brand as string},
+      ugc_creator_id = ${(data.ugcCreatorId as string) ?? null}
     WHERE id = ${id}
     RETURNING *
   `
@@ -163,13 +165,13 @@ export async function getContentIdeas(brand?: string) {
 
 export async function createContentIdea(data: Record<string, unknown>) {
   const rows = await sql`
-    INSERT INTO content_ideas (title, platform, format, description, hook, cta, priority, brand, tags, status)
+    INSERT INTO content_ideas (title, platform, format, description, hook, cta, priority, brand, tags, status, ugc_creator_id)
     VALUES (
       ${data.title as string}, ${data.platform as string}, ${data.format as string},
       ${data.description as string}, ${(data.hook as string) ?? null},
       ${(data.cta as string) ?? null}, ${(data.priority as string) ?? 'media'},
       ${data.brand as string}, ${JSON.stringify(data.tags ?? [])},
-      ${(data.status as string) ?? 'pendiente'}
+      ${(data.status as string) ?? 'pendiente'}, ${(data.ugcCreatorId as string) ?? null}
     )
     RETURNING *
   `
@@ -183,7 +185,8 @@ export async function updateContentIdea(id: string, data: Record<string, unknown
       format = ${data.format as string}, description = ${data.description as string},
       hook = ${(data.hook as string) ?? null}, cta = ${(data.cta as string) ?? null},
       priority = ${data.priority as string}, brand = ${data.brand as string},
-      tags = ${JSON.stringify(data.tags ?? [])}, status = ${data.status as string}
+      tags = ${JSON.stringify(data.tags ?? [])}, status = ${data.status as string},
+      ugc_creator_id = ${(data.ugcCreatorId as string) ?? null}
     WHERE id = ${id}
     RETURNING *
   `
@@ -291,6 +294,7 @@ export function mapVideoRow(row: Record<string, unknown>) {
     status: row.status, description: row.description, script: row.script,
     publishDate: row.publish_date, postUrl: row.post_url,
     tags: row.tags ?? [], brand: row.brand, createdAt: row.created_at,
+    ugcCreatorId: row.ugc_creator_id ?? null,
   }
 }
 
@@ -300,6 +304,7 @@ export function mapContentIdeaRow(row: Record<string, unknown>) {
     description: row.description, hook: row.hook, cta: row.cta,
     priority: row.priority, brand: row.brand, tags: row.tags ?? [],
     status: row.status, createdAt: row.created_at,
+    ugcCreatorId: row.ugc_creator_id ?? null,
   }
 }
 

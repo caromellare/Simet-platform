@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Share2, Calendar, LayoutGrid, Lightbulb, BarChart2 } from 'lucide-react'
 import { CalendarView } from '@/components/social/CalendarView'
 import { VideoKanban } from '@/components/social/VideoKanban'
@@ -17,8 +18,21 @@ const TABS: { key: SocialView; label: string; icon: React.ReactNode }[] = [
 ]
 
 export default function SocialPage() {
-  const [view, setView] = useState<SocialView>('calendar')
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const tabFromUrl = (searchParams.get('tab') as SocialView) || 'calendar'
+  const [view, setView] = useState<SocialView>(tabFromUrl)
   const [brand, setBrand] = useState<Brand>(DEFAULT_BRAND)
+
+  useEffect(() => {
+    const t = (searchParams.get('tab') as SocialView) || 'calendar'
+    if (TABS.find(tab => tab.key === t)) setView(t)
+  }, [searchParams])
+
+  function changeTab(key: SocialView) {
+    setView(key)
+    router.push(`/social?tab=${key}`, { scroll: false })
+  }
 
   return (
     <div className="animate-fade-in">
@@ -40,7 +54,7 @@ export default function SocialPage() {
         {TABS.map(tab => (
           <button
             key={tab.key}
-            onClick={() => setView(tab.key)}
+            onClick={() => changeTab(tab.key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               view === tab.key
                 ? 'bg-brand-teal/15 text-brand-teal border border-brand-teal/25'

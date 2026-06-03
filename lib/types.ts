@@ -114,6 +114,7 @@ export interface VideoItem {
   tags: string[]
   brand: string
   createdAt: string
+  ugcCreatorId?: string   // Vinculación con UGC Creator
 }
 
 export interface ContentIdea {
@@ -129,6 +130,7 @@ export interface ContentIdea {
   tags: string[]
   createdAt: string
   status: 'pendiente' | 'en_proceso' | 'descartada'
+  ugcCreatorId?: string   // Vinculación con UGC Creator
 }
 
 export interface Ephemeris {
