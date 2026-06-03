@@ -1,27 +1,27 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Users, Plus, Search, Filter, X, ExternalLink, Trash2, Edit2, Instagram, Youtube, Facebook } from 'lucide-react'
+import { Users, Plus, Search, X, ExternalLink, Trash2, Edit2, Instagram, Youtube, Facebook, RefreshCw } from 'lucide-react'
 import type { UGCCreator, UGCStatus, UGCPlatform, ContentType, Brand } from '@/lib/types'
 import { StatCard } from '@/components/StatCard'
 
 const DEFAULT_BRAND = { id: 1674000, label: 'Simet Fábrica' } as Brand
 
 const STATUS_CONFIG: Record<UGCStatus, { label: string; color: string; bg: string }> = {
-  contactado: { label: 'Contactado', color: 'text-blue-300', bg: 'bg-blue-500/15 border-blue-500/25' },
-  negociacion: { label: 'En Negociación', color: 'text-amber-300', bg: 'bg-amber-500/15 border-amber-500/25' },
-  confirmado: { label: 'Confirmado', color: 'text-teal-300', bg: 'bg-teal-500/15 border-teal-500/25' },
-  produccion: { label: 'En Producción', color: 'text-purple-300', bg: 'bg-purple-500/15 border-purple-500/25' },
-  publicado: { label: 'Publicado', color: 'text-green-300', bg: 'bg-green-500/15 border-green-500/25' },
-  cancelado: { label: 'Cancelado', color: 'text-red-300', bg: 'bg-red-500/15 border-red-500/25' },
+  contactado:  { label: 'Contactado',       color: 'text-blue-300',   bg: 'bg-blue-500/15 border-blue-500/25' },
+  negociacion: { label: 'En Negociación',   color: 'text-amber-300',  bg: 'bg-amber-500/15 border-amber-500/25' },
+  confirmado:  { label: 'Confirmado',       color: 'text-teal-300',   bg: 'bg-teal-500/15 border-teal-500/25' },
+  produccion:  { label: 'En Producción',    color: 'text-purple-300', bg: 'bg-purple-500/15 border-purple-500/25' },
+  publicado:   { label: 'Publicado',        color: 'text-green-300',  bg: 'bg-green-500/15 border-green-500/25' },
+  cancelado:   { label: 'Cancelado',        color: 'text-red-300',    bg: 'bg-red-500/15 border-red-500/25' },
 }
 
 const PLATFORM_ICON: Record<UGCPlatform, React.ReactNode> = {
   instagram: <Instagram size={14} />,
-  tiktok: <span className="text-xs font-bold">TK</span>,
-  youtube: <Youtube size={14} />,
-  facebook: <Facebook size={14} />,
-  twitter: <span className="text-xs font-bold">X</span>,
-  otro: <span className="text-xs font-bold">?</span>,
+  tiktok:    <span className="text-xs font-bold">TK</span>,
+  youtube:   <Youtube size={14} />,
+  facebook:  <Facebook size={14} />,
+  twitter:   <span className="text-xs font-bold">X</span>,
+  otro:      <span className="text-xs font-bold">?</span>,
 }
 
 const EMPTY_FORM: Omit<UGCCreator, 'id' | 'createdAt'> = {
@@ -37,24 +37,11 @@ function fmt(n: number) {
   return String(n)
 }
 
-function useLocalStorage<T>(key: string, initial: T) {
-  const [value, setValue] = useState<T>(() => {
-    if (typeof window === 'undefined') return initial
-    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : initial } catch { return initial }
-  })
-  const set = (v: T | ((prev: T) => T)) => {
-    setValue(prev => {
-      const next = typeof v === 'function' ? (v as (p: T) => T)(prev) : v
-      localStorage.setItem(key, JSON.stringify(next))
-      return next
-    })
-  }
-  return [value, set] as const
-}
-
 export default function UGCPage() {
-  const [creators, setCreators] = useLocalStorage<UGCCreator[]>('ugc_creators', [])
-  const [brand, setBrand] = useState<Brand>(DEFAULT_BRAND)
+  const [creators, setCreators] = useState<UGCCreator[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [brand] = useState<Brand>(DEFAULT_BRAND)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<UGCStatus | 'todas'>('todas')
   const [filterPlatform, setFilterPlatform] = useState<UGCPlatform | 'todas'>('todas')
@@ -62,17 +49,29 @@ export default function UGCPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
 
-  const brandCreators = creators.filter(c => c.brand === brand.label)
-  const filtered = brandCreators
+  async function fetchCreators() {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/ugc?brand=${encodeURIComponent(brand.label)}`)
+      if (res.ok) setCreators(await res.json())
+    } catch {}
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchCreators() }, [brand.label])
+
+  const filtered = creators
     .filter(c => filterStatus === 'todas' || c.status === filterStatus)
     .filter(c => filterPlatform === 'todas' || c.platform === filterPlatform)
-    .filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.handle.toLowerCase().includes(search.toLowerCase()))
+    .filter(c => !search ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.handle.toLowerCase().includes(search.toLowerCase()))
 
   const stats = {
-    total: brandCreators.length,
-    activos: brandCreators.filter(c => ['confirmado', 'produccion'].includes(c.status)).length,
-    publicados: brandCreators.filter(c => c.status === 'publicado').length,
-    pendientes: brandCreators.filter(c => ['contactado', 'negociacion'].includes(c.status)).length,
+    total:      creators.length,
+    activos:    creators.filter(c => ['confirmado', 'produccion'].includes(c.status)).length,
+    publicados: creators.filter(c => c.status === 'publicado').length,
+    pendientes: creators.filter(c => ['contactado', 'negociacion'].includes(c.status)).length,
   }
 
   function openAdd() {
@@ -80,30 +79,64 @@ export default function UGCPage() {
     setEditingId(null)
     setShowForm(true)
   }
+
   function openEdit(c: UGCCreator) {
-    setForm({ name: c.name, handle: c.handle, platform: c.platform, followers: c.followers, contentType: c.contentType, fee: c.fee || '', freeProduct: c.freeProduct || false, publicationDate: c.publicationDate || '', postUrl: c.postUrl || '', status: c.status, notes: c.notes, brand: c.brand, tags: c.tags })
+    setForm({
+      name: c.name, handle: c.handle, platform: c.platform, followers: c.followers,
+      contentType: c.contentType, fee: c.fee || '', freeProduct: c.freeProduct || false,
+      publicationDate: c.publicationDate || '', postUrl: c.postUrl || '',
+      status: c.status, notes: c.notes, brand: c.brand, tags: c.tags,
+    })
     setEditingId(c.id)
     setShowForm(true)
   }
-  function save() {
+
+  async function save() {
     if (!form.name.trim()) return
-    if (editingId) {
-      setCreators(prev => prev.map(c => c.id === editingId ? { ...c, ...form } : c))
-    } else {
-      setCreators(prev => [...prev, { ...form, id: Date.now().toString(), createdAt: new Date().toISOString() }])
-    }
-    setShowForm(false)
+    setSaving(true)
+    try {
+      if (editingId) {
+        await fetch('/api/ugc', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingId, ...form }),
+        })
+      } else {
+        await fetch('/api/ugc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+      }
+      setShowForm(false)
+      await fetchCreators()
+    } catch {}
+    setSaving(false)
   }
-  function del(id: string) {
-    if (confirm('¿Eliminar este creador?')) setCreators(prev => prev.filter(c => c.id !== id))
+
+  async function del(id: string) {
+    if (!confirm('¿Eliminar este creador?')) return
+    await fetch('/api/ugc', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    setCreators(prev => prev.filter(c => c.id !== id))
   }
-  function updateStatus(id: string, status: UGCStatus) {
+
+  async function updateStatus(id: string, status: UGCStatus) {
+    const creator = creators.find(c => c.id === id)
+    if (!creator) return
     setCreators(prev => prev.map(c => c.id === id ? { ...c, status } : c))
+    await fetch('/api/ugc', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...creator, status }),
+    })
   }
 
   return (
     <div className="animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-bg-border">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-brand-pink/10 border border-brand-pink/25 flex items-center justify-center">
@@ -114,22 +147,23 @@ export default function UGCPage() {
             <p className="text-xs text-slate-500">Seguimiento de colaboraciones y contenido generado por usuarios</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <button onClick={fetchCreators} className="p-2 rounded-lg bg-bg-card border border-bg-border text-slate-400 hover:text-slate-200 transition-colors">
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          </button>
           <button onClick={openAdd} className="flex items-center gap-2 px-3 py-2 bg-brand-purple hover:bg-brand-purple-light rounded-lg text-sm font-medium text-white transition-colors">
             <Plus size={15} /> Agregar Creador
           </button>
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total" value={stats.total} color="purple" icon={<Users size={14} />} />
-        <StatCard label="Activos" value={stats.activos} sub="confirmado + producción" color="teal" />
-        <StatCard label="Publicados" value={stats.publicados} color="green" />
-        <StatCard label="Pendientes" value={stats.pendientes} sub="contactado + negociando" color="orange" />
+        <StatCard label="Total"      value={stats.total}      color="purple" icon={<Users size={14} />} loading={loading} />
+        <StatCard label="Activos"    value={stats.activos}    sub="confirmado + producción" color="teal" loading={loading} />
+        <StatCard label="Publicados" value={stats.publicados} color="green" loading={loading} />
+        <StatCard label="Pendientes" value={stats.pendientes} sub="contactado + negociando" color="orange" loading={loading} />
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-3 mb-5">
         <div className="relative flex-1 max-w-xs">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -141,18 +175,24 @@ export default function UGCPage() {
         </select>
         <select value={filterPlatform} onChange={e => setFilterPlatform(e.target.value as any)} className="px-3 py-2 bg-bg-card border border-bg-border rounded-lg text-sm text-slate-300">
           <option value="todas">Todas las plataformas</option>
-          {(['instagram', 'tiktok', 'youtube', 'facebook'] as UGCPlatform[]).map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+          {(['instagram', 'tiktok', 'youtube', 'facebook'] as UGCPlatform[]).map(p => (
+            <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+          ))}
         </select>
         <span className="text-xs text-slate-500">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Table */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="bg-bg-card border border-bg-border rounded-xl p-12 text-center">
+          <RefreshCw size={24} className="text-slate-600 mx-auto mb-2 animate-spin" />
+          <p className="text-slate-500 text-sm">Cargando creadores...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-bg-card border border-bg-border rounded-xl p-12 text-center">
           <Users size={32} className="text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400 font-medium">{brandCreators.length === 0 ? 'Sin creadores todavía' : 'Sin resultados para esta búsqueda'}</p>
+          <p className="text-slate-400 font-medium">{creators.length === 0 ? 'Sin creadores todavía' : 'Sin resultados'}</p>
           <p className="text-slate-600 text-sm mt-1">
-            {brandCreators.length === 0 ? 'Hacé click en "Agregar Creador" para empezar' : 'Probá con otros filtros'}
+            {creators.length === 0 ? 'Hacé click en "Agregar Creador" para empezar' : 'Probá con otros filtros'}
           </p>
         </div>
       ) : (
@@ -181,9 +221,9 @@ export default function UGCPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-300 font-medium">{fmt(c.followers)}</td>
-                    <td className="px-4 py-3 text-slate-400 capitalize">{c.contentType.replace('_', ' ')}</td>
+                    <td className="px-4 py-3 text-slate-400 capitalize">{c.contentType?.replace('_', ' ')}</td>
                     <td className="px-4 py-3 text-slate-400">
-                      {c.publicationDate ? new Date(c.publicationDate).toLocaleDateString('es-AR') : '—'}
+                      {c.publicationDate ? new Date(c.publicationDate + 'T00:00:00').toLocaleDateString('es-AR') : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <select value={c.status} onChange={e => updateStatus(c.id, e.target.value as UGCStatus)} className={`badge border cursor-pointer bg-transparent text-xs ${sc.color} ${sc.bg}`}>
@@ -208,7 +248,6 @@ export default function UGCPage() {
         </div>
       )}
 
-      {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-bg-elevated border border-bg-border rounded-2xl w-full max-w-lg shadow-2xl animate-slide-up">
@@ -231,7 +270,9 @@ export default function UGCPage() {
                 <div>
                   <label className="block text-xs text-slate-400 mb-1.5 font-medium">Plataforma</label>
                   <select value={form.platform} onChange={e => setForm(f => ({ ...f, platform: e.target.value as UGCPlatform }))} className="w-full px-3 py-2 bg-bg-card border border-bg-border rounded-lg text-sm text-slate-200">
-                    {(['instagram', 'tiktok', 'youtube', 'facebook', 'twitter', 'otro'] as UGCPlatform[]).map(p => <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>)}
+                    {(['instagram', 'tiktok', 'youtube', 'facebook', 'twitter', 'otro'] as UGCPlatform[]).map(p => (
+                      <option key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -243,7 +284,9 @@ export default function UGCPage() {
                 <div>
                   <label className="block text-xs text-slate-400 mb-1.5 font-medium">Tipo de contenido</label>
                   <select value={form.contentType} onChange={e => setForm(f => ({ ...f, contentType: e.target.value as ContentType }))} className="w-full px-3 py-2 bg-bg-card border border-bg-border rounded-lg text-sm text-slate-200">
-                    {(['reels', 'post', 'story', 'video', 'ugc_puro', 'review', 'unboxing'] as ContentType[]).map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+                    {(['reels', 'post', 'story', 'video', 'ugc_puro', 'review', 'unboxing'] as ContentType[]).map(t => (
+                      <option key={t} value={t}>{t.replace('_', ' ')}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -278,8 +321,8 @@ export default function UGCPage() {
             </div>
             <div className="px-6 py-4 border-t border-bg-border flex justify-end gap-3">
               <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-sm text-slate-400 hover:text-slate-200 hover:bg-bg-card transition-colors">Cancelar</button>
-              <button onClick={save} className="px-4 py-2 rounded-lg text-sm font-medium bg-brand-purple hover:bg-brand-purple-light text-white transition-colors">
-                {editingId ? 'Guardar cambios' : 'Agregar'}
+              <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg text-sm font-medium bg-brand-purple hover:bg-brand-purple-light text-white transition-colors disabled:opacity-50">
+                {saving ? 'Guardando...' : editingId ? 'Guardar cambios' : 'Agregar'}
               </button>
             </div>
           </div>
