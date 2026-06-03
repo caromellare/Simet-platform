@@ -8,8 +8,8 @@ function hashPassword(pass: string) {
   return createHash('sha256').update(pass + SESSION_SECRET).digest('hex')
 }
 
-function generateToken(userId: string) {
-  const payload = JSON.stringify({ userId, expires: Date.now() + 7 * 24 * 60 * 60 * 1000 })
+function generateToken(userId: string, role: string) {
+  const payload = JSON.stringify({ userId, role, expires: Date.now() + 7 * 24 * 60 * 60 * 1000 })
   const sig = createHash('sha256').update(payload + SESSION_SECRET).digest('hex').slice(0, 16)
   return Buffer.from(payload).toString('base64') + '.' + sig
 }
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Email o contraseña incorrectos' }, { status: 401 })
   }
 
-  const token = generateToken(user.id)
+  const token = generateToken(user.id, user.role)
   const res = NextResponse.json({
     success: true,
     user: { id: user.id, name: user.name, email: user.email, role: user.role }

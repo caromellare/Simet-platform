@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -7,7 +7,7 @@ import {
   Zap, ChevronRight, ChevronDown, Settings, Sun, Moon,
   Calendar, LayoutGrid, Lightbulb, BarChart2,
   Facebook, Search, Trophy, Video, ListChecks,
-  LogOut
+  LogOut, ShieldCheck
 } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 
@@ -59,6 +59,14 @@ export function Sidebar() {
   const pathname = usePathname()
   const { theme, toggle } = useTheme()
   const [expanded, setExpanded] = useState<string[]>(['/social', '/paid', '/tareas'])
+  const [userRole, setUserRole] = useState<'admin' | 'lectura' | null>(null)
+  const [userName, setUserName] = useState<string>('')
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(u => {
+      if (u) { setUserRole(u.role); setUserName(u.name) }
+    }).catch(() => {})
+  }, [])
 
   function toggleExpand(href: string) {
     setExpanded(prev => prev.includes(href) ? prev.filter(h => h !== href) : [...prev, href])
@@ -72,14 +80,26 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-60 flex flex-col z-50" style={{ backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}>
       {/* SIMET Logo */}
-      <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--sidebar-border)' }}>
+      <div className="px-4 py-4 border-b" style={{ borderColor: 'var(--sidebar-border)' }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-brand-purple flex items-center justify-center text-white font-bold text-sm">S</div>
-          <div>
-            <div className="text-sm font-bold text-white tracking-wide">SIMET</div>
-            <div className="text-[10px] text-slate-400 leading-tight">Marketing Hub</div>
+          <div className="w-8 h-8 rounded-lg bg-brand-purple flex items-center justify-center text-white font-bold text-sm flex-shrink-0">S</div>
+          <div className="min-w-0">
+            <div className="text-xs font-extrabold text-white tracking-widest uppercase leading-tight">SIMET</div>
+            <div className="text-[10px] font-semibold text-brand-purple tracking-wider uppercase leading-tight">Marketing Hub</div>
           </div>
         </div>
+        {userName && (
+          <div className="mt-3 flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white/5">
+            <div className="w-5 h-5 rounded-full bg-brand-purple/40 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-medium text-slate-300 truncate">{userName}</div>
+              <div className="text-[9px] text-slate-500 capitalize">{userRole === 'admin' ? 'Administrador' : 'Lectura'}</div>
+            </div>
+            {userRole === 'admin' && <ShieldCheck size={11} className="text-brand-purple ml-auto flex-shrink-0" />}
+          </div>
+        )}
       </div>
 
       {/* Nav */}
@@ -146,14 +166,19 @@ export function Sidebar() {
           {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           <span>{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
         </button>
-        <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all">
-          <Settings size={14} />
-          <span>Configuración</span>
-        </Link>
-        <Link href="/login" className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/5 transition-all">
+        {userRole === 'admin' && (
+          <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all">
+            <Settings size={14} />
+            <span>Configuración</span>
+          </Link>
+        )}
+        <button
+          onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.href = '/login' }}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-red-400 hover:bg-red-500/5 transition-all w-full"
+        >
           <LogOut size={14} />
           <span>Cerrar sesión</span>
-        </Link>
+        </button>
       </div>
     </aside>
   )

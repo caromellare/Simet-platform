@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createHash } from 'crypto'
-import { getAllUsers, createUser, getUserByEmail, sql } from '@/lib/db'
+import { getAllUsers, createUser, getUserByEmail, updateUser, deleteUserById } from '@/lib/db'
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'simet-marketing-hub-secret-2026'
 
@@ -33,26 +33,21 @@ export async function POST(req: Request) {
 // PATCH /api/auth/users - update user
 export async function PATCH(req: Request) {
   const { id, name, email, role, password } = await req.json()
-  const updates: string[] = []
-  const values: unknown[] = []
-  let idx = 1
-
-  if (name)     { updates.push(`name = $${idx++}`);          values.push(name) }
-  if (email)    { updates.push(`email = $${idx++}`);         values.push(email) }
-  if (role)     { updates.push(`role = $${idx++}`);          values.push(role) }
-  if (password) { updates.push(`password_hash = $${idx++}`); values.push(hashPassword(password)) }
-
-  if (updates.length === 0) return NextResponse.json({ error: 'Nada que actualizar' }, { status: 400 })
-
-  values.push(id)
-  await sql.query(`UPDATE users SET ${updates.join(', ')} WHERE id = $${idx}`, values)
+  if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 })
+  await updateUser(id, {
+    ...(name && { name }),
+    ...(email && { email }),
+    ...(role && { role }),
+    ...(password && { passwordHash: hashPassword(password) }),
+  })
   return NextResponse.json({ success: true })
 }
 
 // DELETE /api/auth/users - delete user
 export async function DELETE(req: Request) {
   const { id } = await req.json()
-  const { rowCount } = await sql`DELETE FROM users WHERE id = ${id}`
-  if (!rowCount) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
+  if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 })
+  const deleted = await deleteUserById(id)
+  if (!deleted) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
   return NextResponse.json({ success: true })
 }

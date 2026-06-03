@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   name        TEXT NOT NULL,
   email       TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  role        TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
+  role        TEXT NOT NULL DEFAULT 'lectura' CHECK (role IN ('admin', 'lectura')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

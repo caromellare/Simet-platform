@@ -68,9 +68,18 @@ export function getEphemerisForDay(date: string): Ephemeris[] {
 }
 
 export const EPHEMERIS_TYPE_COLORS: Record<string, string> = {
-  nacional: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  mundial: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  comercial: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  sectorial: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
-  custom: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+  nacional: 'bg-blue-600/50 text-blue-100 border-blue-400/60',
+  mundial: 'bg-purple-600/50 text-purple-100 border-purple-400/60',
+  comercial: 'bg-amber-500/50 text-amber-100 border-amber-400/60',
+  sectorial: 'bg-teal-600/50 text-teal-100 border-teal-400/60',
+  custom: 'bg-pink-600/50 text-pink-100 border-pink-400/60',
+}
+
+// Colores sólidos para usar con inline styles (más confiables en Tailwind purge)
+export const EPHEMERIS_TYPE_STYLE: Record<string, { bg: string; text: string; border: string }> = {
+  nacional:  { bg: 'rgba(37,99,235,0.55)',  text: '#bfdbfe', border: 'rgba(96,165,250,0.7)' },
+  mundial:   { bg: 'rgba(124,58,237,0.55)', text: '#e9d5ff', border: 'rgba(167,139,250,0.7)' },
+  comercial: { bg: 'rgba(217,119,6,0.55)',  text: '#fef3c7', border: 'rgba(251,191,36,0.7)' },
+  sectorial: { bg: 'rgba(13,148,136,0.55)', text: '#ccfbf1', border: 'rgba(45,212,191,0.7)' },
+  custom:    { bg: 'rgba(219,39,119,0.55)', text: '#fce7f3', border: 'rgba(244,114,182,0.7)' },
 }

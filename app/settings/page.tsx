@@ -24,11 +24,11 @@ interface UserRecord {
   id: string
   name: string
   email: string
-  role: 'admin' | 'lector'
+  role: 'admin' | 'lectura'
   createdAt: string
 }
 
-const EMPTY_USER_FORM = { name: '', email: '', password: '', role: 'lector' as 'admin' | 'lector' }
+const EMPTY_USER_FORM = { name: '', email: '', password: '', role: 'lectura' as 'admin' | 'lectura' }
 
 function UsersSection() {
   const [users, setUsers] = useState<UserRecord[]>([])
@@ -149,7 +149,7 @@ function UsersSection() {
                     : 'bg-blue-500/15 text-blue-300 border-blue-500/25'
                 }`}>
                   {u.role === 'admin' ? <Shield size={9} /> : <BookOpen size={9} />}
-                  {u.role === 'admin' ? 'Admin' : 'Lector'}
+                  {u.role === 'admin' ? 'Administrador' : 'Lectura'}
                 </span>
                 <div className="flex items-center gap-1">
                   <button
@@ -175,8 +175,8 @@ function UsersSection() {
 
       {/* Role legend */}
       <div className="px-6 pb-4 flex items-center gap-6 text-xs text-slate-600">
-        <div className="flex items-center gap-1.5"><Shield size={11} className="text-brand-purple" /> <span>Admin — Acceso completo</span></div>
-        <div className="flex items-center gap-1.5"><BookOpen size={11} className="text-blue-400" /> <span>Lector — Solo puede seleccionar fechas</span></div>
+        <div className="flex items-center gap-1.5"><Shield size={11} className="text-brand-purple" /> <span>Administrador — Acceso completo + Configuración</span></div>
+        <div className="flex items-center gap-1.5"><BookOpen size={11} className="text-blue-400" /> <span>Lectura — Puede editar calendario, influencers y fechas de reporte</span></div>
       </div>
 
       {/* Modal */}
@@ -229,7 +229,7 @@ function UsersSection() {
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">Rol</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {(['admin', 'lector'] as const).map(r => (
+                  {(['admin', 'lectura'] as const).map(r => (
                     <button
                       key={r}
                       type="button"
@@ -240,11 +240,13 @@ function UsersSection() {
                           : 'bg-bg-card border-bg-border text-slate-500 hover:border-slate-600'
                       }`}
                     >
-                      <div className="flex items-center gap-1.5 text-xs font-semibold capitalize">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold">
                         {r === 'admin' ? <Shield size={11} /> : <BookOpen size={11} />}
-                        {r === 'admin' ? 'Admin' : 'Lector'}
+                        {r === 'admin' ? 'Administrador' : 'Lectura'}
                       </div>
-                      <div className="text-[10px] text-slate-500">{r === 'admin' ? 'Acceso completo' : 'Solo puede seleccionar fechas'}</div>
+                      <div className="text-[10px] text-slate-500 leading-tight">
+                        {r === 'admin' ? 'Acceso completo + Configuración' : 'Edita calendario, influencers y fechas'}
+                      </div>
                     </button>
                   ))}
                 </div>

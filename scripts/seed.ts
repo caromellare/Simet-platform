@@ -14,7 +14,7 @@ import { createHash } from 'crypto'
 // Carga variables de entorno
 config({ path: resolve(process.cwd(), '.env.local') })
 
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -23,6 +23,13 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'simet-marketing-hub-secret
 function hashPassword(pass: string) {
   return createHash('sha256').update(pass + SESSION_SECRET).digest('hex')
 }
+
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || ''
+if (!connectionString) {
+  console.error('❌ No hay DATABASE_URL ni POSTGRES_URL en .env.local')
+  process.exit(1)
+}
+const sql = neon(connectionString)
 
 async function runMigration() {
   console.log('📦 Corriendo migrate.sql...')
@@ -38,7 +45,7 @@ async function runMigration() {
     .filter(s => s.length > 0)
 
   for (const statement of statements) {
-    await sql.query(statement)
+    await sql(statement)
   }
   console.log('✅ Schema creado')
 }
@@ -46,9 +53,8 @@ async function runMigration() {
 async function seedAdmin() {
   console.log('👤 Creando usuario admin...')
 
-  // Verificar si ya existe
-  const { rows } = await sql`SELECT id FROM users WHERE email = 'acarolinamellare@gmail.com'`
-  if (rows.length > 0) {
+  const existing = await sql`SELECT id FROM users WHERE email = 'acarolinamellare@gmail.com'`
+  if (existing.length > 0) {
     console.log('   Admin ya existe, skipping')
     return
   }

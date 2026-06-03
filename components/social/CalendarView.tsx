@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
-import { getEphemerisForMonth, EPHEMERIS_TYPE_COLORS } from '@/lib/ephemeris'
+import { getEphemerisForMonth, EPHEMERIS_TYPE_STYLE } from '@/lib/ephemeris'
 import type { Brand, Ephemeris } from '@/lib/types'
 
 function useLocalStorage<T>(key: string, initial: T) {
@@ -72,10 +72,16 @@ export function CalendarView({ brand }: Props) {
         </div>
         <div className="flex items-center gap-3">
           {/* Legend */}
-          <div className="flex items-center gap-3 text-xs text-slate-500">
-            {[['bg-blue-500', 'Nacional'], ['bg-purple-500', 'Mundial'], ['bg-amber-500', 'Comercial'], ['bg-pink-500', 'Custom']].map(([c, l]) => (
-              <span key={l} className="flex items-center gap-1.5"><span className={`w-2 h-2 rounded-full ${c}`} />{l}</span>
-            ))}
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            {([['nacional','Nacional'],['mundial','Mundial'],['comercial','Comercial'],['custom','Custom']] as [string,string][]).map(([type, label]) => {
+              const s = EPHEMERIS_TYPE_STYLE[type]
+              return (
+                <span key={type} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full border" style={{ backgroundColor: s.bg, borderColor: s.border }} />
+                  {label}
+                </span>
+              )
+            })}
           </div>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-card border border-bg-border hover:border-brand-teal/40 rounded-lg text-xs text-slate-300 hover:text-brand-teal transition-colors">
             <Plus size={12} /> Evento
@@ -111,15 +117,19 @@ export function CalendarView({ brand }: Props) {
                       {cell.day}
                     </div>
                     <div className="space-y-0.5">
-                      {events.slice(0, 3).map(ev => (
-                        <div
-                          key={ev.id}
-                          title={ev.title}
-                          className={`text-[10px] px-1.5 py-0.5 rounded truncate border ${EPHEMERIS_TYPE_COLORS[ev.type]}`}
-                        >
-                          {ev.title}
-                        </div>
-                      ))}
+                      {events.slice(0, 3).map(ev => {
+                        const s = EPHEMERIS_TYPE_STYLE[ev.type] ?? EPHEMERIS_TYPE_STYLE.custom
+                        return (
+                          <div
+                            key={ev.id}
+                            title={ev.title}
+                            className="text-[10px] px-1.5 py-0.5 rounded truncate border font-medium"
+                            style={{ backgroundColor: s.bg, color: s.text, borderColor: s.border }}
+                          >
+                            {ev.title}
+                          </div>
+                        )
+                      })}
                       {events.length > 3 && (
                         <div className="text-[10px] text-slate-500 px-1">+{events.length - 3} más</div>
                       )}
@@ -136,16 +146,23 @@ export function CalendarView({ brand }: Props) {
       <div className="mt-5">
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Efemérides del mes</h3>
         <div className="grid grid-cols-2 gap-2">
-          {allEvents.sort((a, b) => a.date.localeCompare(b.date)).map(ev => (
-            <div key={ev.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${EPHEMERIS_TYPE_COLORS[ev.type]}`}>
-              <span className="text-xs font-mono font-bold opacity-70">{ev.date.slice(8)}</span>
-              <span className="text-xs font-medium flex-1 truncate">{ev.title}</span>
-              <span className="text-[10px] opacity-60 capitalize">{ev.type}</span>
-              {ev.type === 'custom' && (
-                <button onClick={() => setCustomEvents(prev => prev.filter(e => e.id !== ev.id))} className="opacity-50 hover:opacity-100"><X size={10} /></button>
-              )}
-            </div>
-          ))}
+          {allEvents.sort((a, b) => a.date.localeCompare(b.date)).map(ev => {
+            const s = EPHEMERIS_TYPE_STYLE[ev.type] ?? EPHEMERIS_TYPE_STYLE.custom
+            return (
+              <div
+                key={ev.id}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg border"
+                style={{ backgroundColor: s.bg, color: s.text, borderColor: s.border }}
+              >
+                <span className="text-xs font-mono font-bold">{ev.date.slice(8)}</span>
+                <span className="text-xs font-medium flex-1 truncate">{ev.title}</span>
+                <span className="text-[10px] opacity-70 capitalize">{ev.type}</span>
+                {ev.type === 'custom' && (
+                  <button onClick={() => setCustomEvents(prev => prev.filter(e => e.id !== ev.id))} className="opacity-50 hover:opacity-100"><X size={10} /></button>
+                )}
+              </div>
+            )
+          })}
           {allEvents.length === 0 && <p className="text-xs text-slate-600 col-span-2">Sin efemérides para este mes</p>}
         </div>
       </div>
