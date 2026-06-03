@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { DollarSign, Facebook, Search, Lightbulb, Trophy } from 'lucide-react'
 import { MetaCampaigns } from '@/components/paid/MetaCampaigns'
@@ -17,12 +17,12 @@ const TABS: { key: PaidView; label: string; icon: React.ReactNode }[] = [
   { key: 'best-ads', label: 'Mejores Anuncios', icon: <Trophy size={14} /> },
 ]
 
-export default function PaidPage() {
+function PaidPageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const tabFromUrl = (searchParams.get('tab') as PaidView) || 'meta'
   const [view, setView] = useState<PaidView>(tabFromUrl)
-  const [brand, setBrand] = useState<Brand>(DEFAULT_BRAND)
+  const [brand] = useState<Brand>(DEFAULT_BRAND)
 
   useEffect(() => {
     const t = (searchParams.get('tab') as PaidView) || 'meta'
@@ -36,7 +36,6 @@ export default function PaidPage() {
 
   return (
     <div className="animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-bg-border">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-brand-orange/10 border border-brand-orange/25 flex items-center justify-center">
@@ -49,7 +48,6 @@ export default function PaidPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex items-center gap-1 mb-6 bg-bg-card border border-bg-border rounded-xl p-1 w-fit">
         {TABS.map(tab => (
           <button
@@ -77,5 +75,13 @@ export default function PaidPage() {
         {view === 'best-ads' && <BestAds brand={brand} />}
       </div>
     </div>
+  )
+}
+
+export default function PaidPage() {
+  return (
+    <Suspense>
+      <PaidPageInner />
+    </Suspense>
   )
 }

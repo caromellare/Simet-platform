@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Share2, Calendar, LayoutGrid, Lightbulb, BarChart2 } from 'lucide-react'
 import { CalendarView } from '@/components/social/CalendarView'
@@ -17,12 +17,12 @@ const TABS: { key: SocialView; label: string; icon: React.ReactNode }[] = [
   { key: 'report', label: 'Reportes', icon: <BarChart2 size={14} /> },
 ]
 
-export default function SocialPage() {
+function SocialPageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const tabFromUrl = (searchParams.get('tab') as SocialView) || 'calendar'
   const [view, setView] = useState<SocialView>(tabFromUrl)
-  const [brand, setBrand] = useState<Brand>(DEFAULT_BRAND)
+  const [brand] = useState<Brand>(DEFAULT_BRAND)
 
   useEffect(() => {
     const t = (searchParams.get('tab') as SocialView) || 'calendar'
@@ -36,7 +36,6 @@ export default function SocialPage() {
 
   return (
     <div className="animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-bg-border">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-brand-teal/10 border border-brand-teal/25 flex items-center justify-center">
@@ -49,7 +48,6 @@ export default function SocialPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex items-center gap-1 mb-6 bg-bg-card border border-bg-border rounded-xl p-1 w-fit">
         {TABS.map(tab => (
           <button
@@ -67,7 +65,6 @@ export default function SocialPage() {
         ))}
       </div>
 
-      {/* Content */}
       <div className="animate-fade-in" key={view}>
         {view === 'calendar' && <CalendarView brand={brand} />}
         {view === 'kanban' && <VideoKanban brand={brand} />}
@@ -75,5 +72,13 @@ export default function SocialPage() {
         {view === 'report' && <SocialReport brand={brand} />}
       </div>
     </div>
+  )
+}
+
+export default function SocialPage() {
+  return (
+    <Suspense>
+      <SocialPageInner />
+    </Suspense>
   )
 }
